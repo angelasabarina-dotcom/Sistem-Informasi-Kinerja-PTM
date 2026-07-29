@@ -465,7 +465,7 @@ a{text-decoration:none}
               <th>Kode Wilayah</th>
               <th>Provinsi</th>
               <th>Kabupaten/Kota</th>
-              <th>Target Skrining (%)</th>
+              <th>Target</th>
               <th>Capaian (%)</th>
               <th>Gap (%)</th>
             </tr>
@@ -492,7 +492,7 @@ a{text-decoration:none}
 
   <!-- ══ IMPOR DATA MASSAL ══ -->
   <div class="page" id="import">
-    <div class="note-box">Gunakan halaman ini untuk mengisi capaian <strong>514 kabupaten/kota sekaligus untuk satu IKK</strong> lewat Google Sheets, alih-alih memasukkan data satu per satu. Pilih dulu indikatornya, unduh template, isi di Spreadsheet, publikasikan sebagai CSV, lalu tarik kembali ke sini.</div>
+    <div class="note-box">Gunakan halaman ini untuk mengisi capaian <strong>514 kabupaten/kota sekaligus untuk satu IKK</strong> lewat Google Sheets, alih-alih memasukkan data satu per satu. Template sudah menyertakan kolom <strong>target</strong> per kab/kota (default = target nasional indikator ini), silakan ubah angkanya kalau target daerah tersebut memang berbeda dari target nasional. Pilih dulu indikatornya, unduh template, isi di Spreadsheet, publikasikan sebagai CSV, lalu tarik kembali ke sini.</div>
 
     <div class="card-box" style="max-width:900px;margin-bottom:16px">
       <div class="section-hdr" style="margin-bottom:14px">
@@ -549,7 +549,7 @@ a{text-decoration:none}
       <div id="import-preview-summary"></div>
       <div class="table-scroll" style="max-height:320px;margin-top:10px">
         <table class="repo-table">
-          <thead><tr><th>#</th><th>Kode Wilayah</th><th>Kab/Kota (Sheet)</th><th>Kab/Kota (Cocok Sistem)</th><th>Denominator</th><th>Numerator</th><th>Capaian (%)</th></tr></thead>
+          <thead><tr><th>#</th><th>Kode Wilayah</th><th>Kab/Kota (Sheet)</th><th>Kab/Kota (Cocok Sistem)</th><th>Target</th><th>Denominator</th><th>Numerator</th><th>Capaian (%)</th></tr></thead>
           <tbody id="import-preview-tbody"></tbody>
         </table>
       </div>
@@ -621,7 +621,7 @@ async function fbLoadAll(){
             Object.keys(rows).forEach(safeKode=>{
               const v = rows[safeKode] || {};
               const kode = v.kodeWilayah || safeKode;
-              IMPORTED_DATA[overrideKey(diseaseKey, kode, periode)] = { capaian:v.capaian, numerator:v.numerator, denominator:v.denominator };
+              IMPORTED_DATA[overrideKey(diseaseKey, kode, periode)] = { capaian:v.capaian, numerator:v.numerator, denominator:v.denominator, target:v.target };
             });
           });
         });
@@ -1362,16 +1362,18 @@ function getCellData(diseaseKey, idx){
   const imported = IMPORTED_DATA[ovKey];
   if(imported){
     const capaian = imported.capaian;
-    const gap = capaian>=dz.target ? 0 : Math.round(((dz.target-capaian)/dz.target*100)*10)/10;
+    const target = (imported.target!==undefined && imported.target!==null) ? imported.target : dz.target;
+    const gap = capaian>=target ? 0 : Math.round(((target-capaian)/target*100)*10)/10;
     const status = gap>50 ? 'merah' : gap>=20 ? 'kuning' : 'hijau';
-    return { capaian, gap, status, imported:true };
+    return { capaian, gap, status, target, imported:true };
   }
   const base = SCREENING_DATA[diseaseKey][idx];
   const factor = PERIOD_FACTORS[currentPeriod] ?? 1;
   const capaian = Math.min(100, Math.round(base.capaian*factor*10)/10);
-  const gap = capaian>=dz.target ? 0 : Math.round(((dz.target-capaian)/dz.target*100)*10)/10;
+  const target = dz.target;
+  const gap = capaian>=target ? 0 : Math.round(((target-capaian)/target*100)*10)/10;
   const status = gap>50 ? 'merah' : gap>=20 ? 'kuning' : 'hijau';
-  return { capaian, gap, status, imported:false };
+  return { capaian, gap, status, target, imported:false };
 }
 // ── Hitung array {capaian,gap,status} untuk seluruh 514 wilayah pada satu jenis skrining ──
 function computeDiseaseStats(diseaseKey){
@@ -1382,26 +1384,36 @@ function computeDiseaseStats(diseaseKey){
 function computeProvinceAggregate(provName, diseaseSel){
   const idxs = [];
   REGIONS.forEach((r,idx)=>{ if(r.provinsi===provName) idxs.push(idx); });
-  let capSum=0, gapSum=0, targetSum=0, n=0;
+  let n=0;
   if(diseaseSel==='__avg__'){
+    // Target nasional tiap IKK berbeda-beda dan TIDAK boleh dijumlah/dirata-rata lintas indikator.
+    // Maka mode gabungan ini memakai rasio "% dari target" per indikator, lalu dirata-rata —
+    // sehingga target acuannya konsisten 100 (persen dari target), bukan angka target yang diakumulasi.
+    let ratioSum=0, gapSum=0;
     DISEASES.forEach(dz=>{
       idxs.forEach(idx=>{
         const d = getCellData(dz.key, idx);
-        capSum+=d.capaian; gapSum+=d.gap; targetSum+=dz.target; n++;
+        ratioSum += Math.min(100, (d.capaian/dz.target)*100);
+        gapSum += d.gap;
+        n++;
       });
     });
+    const avgCapaian = n? ratioSum/n : 0;
+    const avgGap = n? gapSum/n : 0;
+    const status = avgGap>50?'merah':avgGap>=20?'kuning':'hijau';
+    return { avgCapaian, avgTarget:100, avgGap, status, jumlahWilayah: idxs.length };
   } else {
-    const dz = DISEASE_MAP[diseaseSel];
+    let capSum=0, gapSum=0, targetSum=0;
     idxs.forEach(idx=>{
       const d = getCellData(diseaseSel, idx);
-      capSum+=d.capaian; gapSum+=d.gap; targetSum+=dz.target; n++;
+      capSum+=d.capaian; gapSum+=d.gap; targetSum+=d.target; n++;
     });
+    const avgCapaian = n? capSum/n : 0;
+    const avgGap = n? gapSum/n : 0;
+    const avgTarget = n? targetSum/n : 1;
+    const status = avgGap>50?'merah':avgGap>=20?'kuning':'hijau';
+    return { avgCapaian, avgTarget, avgGap, status, jumlahWilayah: idxs.length };
   }
-  const avgCapaian = n? capSum/n : 0;
-  const avgTarget = n? targetSum/n : 1;
-  const avgGap = n? gapSum/n : 0;
-  const status = avgGap>50?'merah':avgGap>=20?'kuning':'hijau';
-  return { avgCapaian, avgTarget, avgGap, status, jumlahWilayah: idxs.length };
 }
 
 // ── Populate sidebar disease nav, dikelompokkan per ISS > IKP ──
@@ -1480,7 +1492,7 @@ function getFilteredRows(){
     if(q && !(r.kodeWilayah.toLowerCase().includes(q) || r.provinsi.toLowerCase().includes(q) || r.kabkota.toLowerCase().includes(q))) return;
     const d = getCellData(currentDisease, idx);
     if(activeStatusFilter!=='all' && d.status!==activeStatusFilter) return;
-    rows.push({ ...r, capaian:d.capaian, gap:d.gap, status:d.status, target:dz.target, imported:d.imported });
+    rows.push({ ...r, capaian:d.capaian, gap:d.gap, status:d.status, target:d.target, imported:d.imported });
   });
   return rows;
 }
@@ -1503,7 +1515,7 @@ function renderRepositori(){
         <td class="kode-wilayah">${r.kodeWilayah}</td>
         <td class="prov-cell">${r.provinsi}</td>
         <td class="kab-cell">${r.kabkota}</td>
-        <td class="num">${r.target.toFixed(1)}</td>
+        <td class="num">${dz.targetLabel ? dz.targetLabel : r.target.toFixed(1)+'%'}</td>
         <td class="num">${r.capaian.toFixed(1)}${r.imported?' <span title="Data hasil impor Google Sheets" style="color:var(--teal)">📥</span>':''}</td>
         <td class="center"><span class="gap-cell ${gapClass(r.status)}">${r.gap.toFixed(1)}%</span></td>
       </tr>`).join('');
@@ -1756,17 +1768,20 @@ function renderDrilldown(){
     REGIONS.forEach((r,idx)=>{
       if(r.provinsi!==drillProvince) return;
       if(drillDiseaseSel==='__avg__'){
-        let capSum=0, gapSum=0, targetSum=0;
+        // Sama seperti computeProvinceAggregate: target berbeda tiap IKK tidak dijumlah/dirata-rata.
+        // Dipakai rasio %-dari-target per indikator, dirata-rata; acuan target ditampilkan tetap 100.
+        let ratioSum=0, gapSum=0;
         DISEASES.forEach(dz=>{
           const d = getCellData(dz.key, idx);
-          capSum+=d.capaian; gapSum+=d.gap; targetSum+=dz.target;
+          ratioSum += Math.min(100, (d.capaian/dz.target)*100);
+          gapSum += d.gap;
         });
-        const capaian = capSum/DISEASES.length, gap = gapSum/DISEASES.length, target = targetSum/DISEASES.length;
+        const capaian = ratioSum/DISEASES.length, gap = gapSum/DISEASES.length, target = 100;
         const status = gap>50?'merah':gap>=20?'kuning':'hijau';
         rows.push({ ...r, capaian, gap, target, status });
       } else {
         const d = getCellData(drillDiseaseSel, idx);
-        rows.push({ ...r, capaian:d.capaian, gap:d.gap, target:DISEASE_MAP[drillDiseaseSel].target, status:d.status });
+        rows.push({ ...r, capaian:d.capaian, gap:d.gap, target:d.target, status:d.status });
       }
     });
 
@@ -1882,8 +1897,11 @@ function onImportIkkChange(){
 function downloadImportTemplate(){
   const key = document.getElementById('import-ikk-select').value;
   const dz = DISEASE_MAP[key];
-  const hdr = ['kode_wilayah','provinsi','kabupaten_kota','denominator','numerator'];
-  const rows = REGIONS.map(r=>[r.kodeWilayah, '"'+r.provinsi+'"', '"'+r.kabkota+'"', '', '']);
+  // Kolom "target" diisi default dengan target nasional, boleh diubah staf per kab/kota
+  // kalau target daerah tersebut memang berbeda dari target nasional.
+  const defaultTarget = dz.targetLabel ? '' : dz.target;
+  const hdr = ['kode_wilayah','provinsi','kabupaten_kota','target','denominator','numerator'];
+  const rows = REGIONS.map(r=>[r.kodeWilayah, '"'+r.provinsi+'"', '"'+r.kabkota+'"', defaultTarget, '', '']);
   const csv = [hdr, ...rows].map(r=>r.join(',')).join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
@@ -1912,6 +1930,8 @@ async function fetchAndPreviewImport(){
       throw new Error('Kolom wajib tidak ditemukan. Header harus memuat: kode_wilayah, denominator, numerator (unduh template agar sesuai).');
     }
     const idxKab = header.indexOf('kabupaten_kota');
+    const idxTarget = header.indexOf('target');
+    const dzSel = DISEASE_MAP[document.getElementById('import-ikk-select').value];
     const kodeMap = regionIndexByKode();
 
     const matched = [], unmatchedCodes = [];
@@ -1924,8 +1944,15 @@ async function fetchAndPreviewImport(){
       const regIdx = kodeMap[kode];
       if(regIdx===undefined){ unmatchedCodes.push(kode); continue; }
       if(isNaN(den) || isNaN(num) || den<=0){ continue; }
+      // Target per kab/kota: pakai isian di kolom "target" kalau diisi, kalau kosong/tidak ada
+      // kolomnya baru dipakai target nasional IKK ini sebagai bawaan.
+      let rowTarget = dzSel.target;
+      if(idxTarget!==-1){
+        const t = parseFloat(cols[idxTarget]);
+        if(!isNaN(t) && t>0) rowTarget = t;
+      }
       const capaian = Math.max(0, Math.min(100, Math.round((num/den*100)*10)/10));
-      matched.push({ kodeWilayah:kode, kabSheet:(cols[idxKab]||'').trim(), region:REGIONS[regIdx], denominator:den, numerator:num, capaian });
+      matched.push({ kodeWilayah:kode, kabSheet:(cols[idxKab]||'').trim(), region:REGIONS[regIdx], denominator:den, numerator:num, capaian, target:rowTarget });
     }
 
     pendingImportRows = matched;
@@ -1956,10 +1983,11 @@ function renderImportPreview(totalRows, unmatchedCodes){
       <td class="kode-wilayah">${m.kodeWilayah}</td>
       <td class="kab-cell">${m.kabSheet||'–'}</td>
       <td class="kab-cell">${m.region.kabkota}</td>
+      <td class="num">${m.target}%</td>
       <td class="num">${m.denominator}</td>
       <td class="num">${m.numerator}</td>
       <td class="num" style="font-weight:700">${m.capaian.toFixed(1)}</td>
-    </tr>`).join('') + (matched.length>50 ? `<tr><td colspan="7" style="text-align:center;color:var(--gray-text);font-size:11px">… dan ${matched.length-50} baris lainnya</td></tr>` : '');
+    </tr>`).join('') + (matched.length>50 ? `<tr><td colspan="8" style="text-align:center;color:var(--gray-text);font-size:11px">… dan ${matched.length-50} baris lainnya</td></tr>` : '');
 
   document.getElementById('import-apply-btn').disabled = matched.length===0;
 }
@@ -1986,8 +2014,8 @@ async function applyImportedData(){
   const rowsForFirebase = {};
   pendingImportRows.forEach(m=>{
     const ovKey = overrideKey(key, m.kodeWilayah, periode);
-    IMPORTED_DATA[ovKey] = { capaian:m.capaian, numerator:m.numerator, denominator:m.denominator };
-    rowsForFirebase[fbKeySafe(m.kodeWilayah)] = { kodeWilayah:m.kodeWilayah, capaian:m.capaian, numerator:m.numerator, denominator:m.denominator };
+    IMPORTED_DATA[ovKey] = { capaian:m.capaian, numerator:m.numerator, denominator:m.denominator, target:m.target };
+    rowsForFirebase[fbKeySafe(m.kodeWilayah)] = { kodeWilayah:m.kodeWilayah, capaian:m.capaian, numerator:m.numerator, denominator:m.denominator, target:m.target };
   });
   const logEntry = { ts:Date.now(), matched:count, total:count, url, periode };
   IMPORT_LOG[key] = logEntry;
