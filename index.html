@@ -1789,6 +1789,7 @@ function renderCascadeIKKPanel(){
 let drillLevel = 'nasional';   // 'nasional' | 'provinsi'
 let drillProvince = null;
 let drillDiseaseSel = '__avg__';
+let drillProvinceChartInstance = null;
 
 function renderDrillDiseaseSelect(){
   const sel = document.getElementById('drill-disease-select');
@@ -1817,53 +1818,149 @@ function renderDrilldown(){
         <div class="province-card-bar"><div class="province-card-fill" style="width:${Math.min(100,(agg.avgCapaian/agg.avgTarget)*100)}%;background:${col}"></div></div>
       </div>`;
     }).join('');
-  } else {
-    document.getElementById('province-grid').style.display='none';
-    document.getElementById('breadcrumb').innerHTML = `<span class="breadcrumb-item" onclick="goNasionalDrill()">🇮🇩 Nasional</span><span class="breadcrumb-sep"> / </span><span class="breadcrumb-current">${drillProvince}</span>`;
-    document.getElementById('drill-title').textContent = `Capaian Kabupaten/Kota — ${drillProvince}`;
+    } else {
+    document.getElementById('province-grid').style.display = 'none';
+    document.getElementById('breadcrumb').innerHTML =
+      `<span class="breadcrumb-item" onclick="goNasionalDrill()">🇮🇩 Nasional</span>` +
+      `<span class="breadcrumb-sep"> / </span>` +
+      `<span class="breadcrumb-current">${drillProvince}</span>`;
+    document.getElementById('drill-title').textContent =
+      `Capaian Kabupaten/Kota — ${drillProvince}`;
 
     const rows = [];
-    REGIONS.forEach((r,idx)=>{
-      if(r.provinsi!==drillProvince) return;
-      if(drillDiseaseSel==='__avg__'){
-        // Sama seperti computeProvinceAggregate: target berbeda tiap IKK tidak dijumlah/dirata-rata.
-        // Dipakai rasio %-dari-target per indikator, dirata-rata; acuan target ditampilkan tetap 100.
-        let ratioSum=0, gapSum=0;
-        DISEASES.forEach(dz=>{
+    REGIONS.forEach((r, idx) => {
+      if (r.provinsi !== drillProvince) return;
+      if (drillDiseaseSel === '__avg__') {
+        let ratioSum = 0, gapSum = 0;
+        DISEASES.forEach(dz => {
           const d = getCellData(dz.key, idx);
-          ratioSum += Math.min(100, (d.capaian/dz.target)*100);
+          ratioSum += Math.min(100, (d.capaian / dz.target) * 100);
           gapSum += d.gap;
         });
-        const capaian = ratioSum/DISEASES.length, gap = gapSum/DISEASES.length, target = 100;
-        const status = gap>50?'merah':gap>=20?'kuning':'hijau';
-        rows.push({ ...r, capaian, gap, target, status });
+        const capaian = ratioSum / DISEASES.length;
+        const gap = gapSum / DISEASES.length;
+        const status = gap > 50 ? 'merah' : gap >= 20 ? 'kuning' : 'hijau';
+        rows.push({ ...r, capaian, gap, target: 100, status });
       } else {
         const d = getCellData(drillDiseaseSel, idx);
-        rows.push({ ...r, capaian:d.capaian, gap:d.gap, target:DISEASE_MAP[drillDiseaseSel].target, status:d.status });
+        rows.push({
+          ...r,
+          capaian: d.capaian,
+          gap: d.gap,
+          target: DISEASE_MAP[drillDiseaseSel].target,
+          status: d.status
+        });
       }
     });
 
+    // Urutkan dari capaian terendah ke tertinggi
+    rows.sort((a, b) => a.capaian - b.capaian);
+
+    const avg = rows.length
+      ? rows.reduce((s, x) => s + x.capaian, 0) / rows.length
+      : 0;
+    const nMerah = rows.filter(x => x.status === 'merah').length;
+    const nKuning = rows.filter(x => x.status === 'kuning').length;
+    const nHijau = rows.filter(x => x.status === 'hijau').length;
+
     const box = document.getElementById('drill-detail-box');
-    box.style.display='block';
+    box.style.display = 'block';
+    const chartHeight = Math.max(280, rows.length * 28);
+
     box.innerHTML = `
-      <div class="results-count" style="padding:0 0 10px;border:none">${rows.length} kabupaten/kota di ${drillProvince}</div>
-      <div class="table-scroll" style="max-height:480px">
-        <table class="repo-table">
-          <thead><tr><th>#</th><th>Kode Wilayah</th><th>Kabupaten/Kota</th><th>Target (%)</th><th>Capaian (%)</th><th>Gap (%)</th></tr></thead>
-          <tbody>
-            ${rows.map((r,i)=>`<tr>
-              <td class="rownum">${i+1}</td>
-              <td class="kode-wilayah">${r.kodeWilayah}</td>
-              <td class="kab-cell">${r.kabkota}</td>
-              <td class="num">${r.target.toFixed(1)}</td>
-              <td class="num">${r.capaian.toFixed(1)}</td>
-              <td class="center"><span class="gap-cell ${gapClass(r.status)}">${r.gap.toFixed(1)}%</span></td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`;
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div class="kpi-card" style="flex:1;min-width:120px">
+          <div class="kpi-label">Rata-rata capaian</div>
+          <div class="kpi-value teal">${avg.toFixed(1)}%</div>
+          <div class="kpi-sub">${rows.length} kab/kota</div>
+        </div>
+        <div class="kpi-card" style="flex:1;min-width:120px">
+          <div class="kpi-label">Sangat tertinggal</div>
+          <div class="kpi-value red">${nMerah}</div>
+          <div class="kpi-sub">gap &gt; 50%</div>
+        </div>
+        <div class="kpi-card" style="flex:1;min-width:120px">
+          <div class="kpi-label">Perlu perhatian</div>
+          <div class="kpi-value orange">${nKuning}</div>
+          <div class="kpi-sub">gap 20–50%</div>
+        </div>
+        <div class="kpi-card" style="flex:1;min-width:120px">
+          <div class="kpi-label">Mendekati target</div>
+          <div class="kpi-value teal">${nHijau}</div>
+          <div class="kpi-sub">gap &lt; 20%</div>
+        </div>
+      </div>
+
+      <div class="section-hdr" style="margin-bottom:8px">
+        <div class="section-title">Capaian per Kabupaten/Kota (rendah → tinggi)</div>
+      </div>
+      <div style="background:var(--white);border:1px solid var(--gray-border);border-radius:10px;padding:12px">
+        <div style="height:${chartHeight}px;position:relative">
+          <canvas id="drill-province-chart"></canvas>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <button class="action-btn primary" onclick="goNasionalDrill()">← Kembali ke 38 Provinsi</button>
+      </div>
+    `;
+
+    // Gambar bar chart
+    setTimeout(() => {
+      const canvas = document.getElementById('drill-province-chart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      if (drillProvinceChartInstance) {
+        drillProvinceChartInstance.destroy();
+        drillProvinceChartInstance = null;
+      }
+      const labels = rows.map(r => r.kabkota);
+      const values = rows.map(r => r.capaian);
+      const colors = rows.map(r =>
+        r.status === 'merah' ? '#C0392B' :
+        r.status === 'kuning' ? '#E8A020' : '#0F8C6B'
+      );
+      drillProvinceChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Capaian (%)',
+            data: values,
+            backgroundColor: colors,
+            borderRadius: 4,
+            barThickness: 16
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  return ctx.parsed.x.toFixed(1) + '%';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              max: 100,
+              ticks: { callback: v => v + '%' },
+              grid: { color: '#EAEFF7' }
+            },
+            y: {
+              ticks: { font: { size: 11 } },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }, 50);
   }
-}
 
 function drillToProvince(name){
   drillLevel='provinsi'; drillProvince=name;
