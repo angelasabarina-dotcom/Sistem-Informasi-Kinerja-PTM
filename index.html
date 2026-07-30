@@ -429,10 +429,10 @@ a{text-decoration:none}
   <!-- ══ SKRINING PENYAKIT (TABEL INDIKATOR UTAMA) ══ -->
   <div class="page" id="skrining">
     <div class="legend-row">
-      <strong style="color:var(--text-dark)">Keterangan Gap %:</strong>
-      <span><span class="legend-dot" style="background:var(--red)"></span>Merah — Gap &gt; 50% (Sangat tertinggal)</span>
-      <span><span class="legend-dot" style="background:var(--amber)"></span>Kuning — Gap 20–50% (Perlu perhatian)</span>
-      <span><span class="legend-dot" style="background:var(--teal)"></span>Hijau — Gap &lt; 20% (Sudah mendekati target)</span>
+      <strong style="color:var(--text-dark)">Keterangan warna kolom %:</strong>
+      <span><span class="legend-dot" style="background:var(--red)"></span>Merah — selisih dari target &gt; 50% (Sangat tertinggal)</span>
+      <span><span class="legend-dot" style="background:var(--amber)"></span>Kuning — selisih dari target 20–50% (Perlu perhatian)</span>
+      <span><span class="legend-dot" style="background:var(--teal)"></span>Hijau — selisih dari target &lt; 20% (Sudah mendekati target)</span>
       <span>﹡ Jumlah sasaran (Target) belum tersedia — kab/kota ini belum diimpor lewat Impor Data Massal</span>
     </div>
 
@@ -466,9 +466,9 @@ a{text-decoration:none}
               <th>Kode Wilayah</th>
               <th>Provinsi</th>
               <th>Kabupaten/Kota</th>
-              <th>Target</th>
-              <th>Capaian (%)</th>
-              <th>Gap (%)</th>
+              <th>Target (Sasaran)</th>
+              <th>Capaian</th>
+              <th>%</th>
             </tr>
           </thead>
           <tbody id="repo-tbody"></tbody>
@@ -597,62 +597,6 @@ a{text-decoration:none}
 // ══════════════════════════════════════════════════════════════
 
 const CONFIG = { SHEET_URL: '' };
-
-function loadConfig() {
-  try {
-    const url = localStorage.getItem('siptm_sheet_url');
-    if (url) CONFIG.SHEET_URL = url;
-  } catch (e) {}
-}
-
-async function loadDataFromGoogleSheet() {
-  const url = CONFIG.SHEET_URL;
-  if (!url) return;
-  showDataBanner('success', 'Memuat data dari Google Sheets...');
-  try {
-    const r = await fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + '_ts=' + Date.now());
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const text = await r.text();
-    const table = parseCSV(text);
-    if (table.length < 2) throw new Error('Sheet kosong atau format tidak sesuai.');
-    const header = table[0].map(function(h){ return h.trim().toLowerCase(); });
-    const idxKode = header.indexOf('kode_wilayah');
-    const idxDen = header.indexOf('denominator');
-    const idxNum = header.indexOf('numerator');
-    if (idxKode === -1 || idxDen === -1 || idxNum === -1) {
-      throw new Error('Header wajib: kode_wilayah, denominator, numerator');
-    }
-    const key = currentDisease;
-    const periode = currentPeriod;
-    const kodeMap = regionIndexByKode();
-    var matched = 0;
-    Object.keys(IMPORTED_DATA).forEach(function(k) {
-      if (k.indexOf(key + '|') === 0 && k.indexOf('|' + periode) === k.length - ('|' + periode).length) {
-        delete IMPORTED_DATA[k];
-      }
-    });
-    for (var i = 1; i < table.length; i++) {
-      var cols = table[i];
-      var kode = (cols[idxKode] || '').trim();
-      if (!kode) continue;
-      var den = parseFloat(cols[idxDen]);
-      var num = parseFloat(cols[idxNum]);
-      if (kodeMap[kode] === undefined) continue;
-      if (isNaN(den) || isNaN(num) || den <= 0) continue;
-      var capaian = Math.max(0, Math.min(100, Math.round((num / den * 100) * 10) / 10));
-      var ovKey = overrideKey(key, kode, periode);
-      IMPORTED_DATA[ovKey] = { capaian: capaian, numerator: num, denominator: den };
-      matched++;
-    }
-    IMPORT_LOG[key] = { ts: Date.now(), matched: matched, total: matched, url: url };
-    renderBeranda();
-    renderRepositori();
-    renderProvinceBarChart();
-    showDataBanner('success', 'Data Google Sheets dimuat: ' + matched + ' kab/kota.');
-  } catch (e) {
-    showDataBanner('error', 'Gagal memuat Google Sheets: ' + e.message);
-  }
-}
 
 // ══════════════════════════════════════════════════════════════
 // FIREBASE REALTIME DATABASE — penyimpanan data impor bersama,
@@ -1574,8 +1518,8 @@ function renderRepositori(){
         <td class="prov-cell">${r.provinsi}</td>
         <td class="kab-cell">${r.kabkota}</td>
         <td class="num">${r.sasaran!=null ? r.sasaran.toLocaleString('id-ID') : '<span title="Belum ada data sasaran wilayah ini dari impor" style="color:var(--gray-text);cursor:help">— ﹡</span>'}</td>
-        <td class="num">${r.capaian.toFixed(1)}${r.imported?' <span title="Data hasil impor Google Sheets" style="color:var(--teal)">📥</span>':''}</td>
-        <td class="center"><span class="gap-cell ${gapClass(r.status)}">${r.gap.toFixed(1)}%</span></td>
+        <td class="num">${r.tercapai!=null ? r.tercapai.toLocaleString('id-ID') : '<span title="Belum ada data capaian wilayah ini dari impor" style="color:var(--gray-text);cursor:help">— ﹡</span>'}${r.imported?' <span title="Data hasil impor Google Sheets" style="color:var(--teal)">📥</span>':''}</td>
+        <td class="center"><span class="gap-cell ${gapClass(r.status)}">${r.capaian.toFixed(1)}%</span></td>
       </tr>`).join('');
   }
   const targetTxt = dz.targetLabel ? dz.targetLabel : dz.target+'%';
@@ -1880,10 +1824,9 @@ function exportCSV(){
   const dz = DISEASE_MAP[currentDisease];
   const ikp = parentIKP(dz), iss = parentISS(dz);
   const rows = getFilteredRows();
-  const hdr = ['Kode Wilayah','Nama Provinsi','Kabupaten/Kota','ISS','IKP','Indikator (IKK)','Target','Sasaran','Tercapai','Capaian (%)','Gap (%)','Status'];
+  const hdr = ['Kode Wilayah','Nama Provinsi','Kabupaten/Kota','ISS','IKP','Indikator (IKK)','Target (Sasaran)','Capaian','%','Status'];
   const statusLabel = { merah:'Sangat Tertinggal', kuning:'Perlu Perhatian', hijau:'Mendekati Target' };
-  const targetTxt = dz.targetLabel ? dz.targetLabel : dz.target+'%';
-  const csvRows = rows.map(r=>[r.kodeWilayah, '"'+r.provinsi+'"', '"'+r.kabkota+'"', iss?iss.code:'', ikp?ikp.code:'', '"'+dz.label+'"', targetTxt, r.sasaran??'', r.tercapai??'', r.capaian, r.gap, statusLabel[r.status]]);
+  const csvRows = rows.map(r=>[r.kodeWilayah, '"'+r.provinsi+'"', '"'+r.kabkota+'"', iss?iss.code:'', ikp?ikp.code:'', '"'+dz.label+'"', r.sasaran??'', r.tercapai??'', r.capaian, statusLabel[r.status]]);
   const csv = [hdr, ...csvRows].map(r=>r.join(',')).join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
@@ -2105,13 +2048,9 @@ async function testConnection(){
   }catch(e){ statusEl.innerHTML=`<span style="color:var(--red);font-weight:600">✗ Gagal: ${e.message}</span>`; }
 }
 async function saveConfig(){
-  CONFIG.SHEET_URL = document.getElementById('cfg-url').value.trim();
-  try {
-    localStorage.setItem('siptm_sheet_url', CONFIG.SHEET_URL);
-  } catch (e) {}
+  CONFIG.SHEET_URL=document.getElementById('cfg-url').value.trim();
   hideConfigPanel();
-  showDataBanner('success', 'Konfigurasi tersimpan. Memuat data dari Google Sheets...');
-  loadDataFromGoogleSheet();
+  showDataBanner('success','Konfigurasi tersimpan. Integrasi data riil dapat dilanjutkan oleh tim teknis.');
 }
 function showDataBanner(type,msg){
   const b=document.getElementById('data-banner'); if(!b) return;
@@ -2123,8 +2062,6 @@ function showDataBanner(type,msg){
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', async ()=>{
-  loadConfig();
-  
   renderDiseaseNav();
   renderDiseaseSelects();
   updateDiseaseNavActive();
@@ -2152,10 +2089,6 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   renderBeranda();
   renderRepositori();
   setTimeout(()=>{ renderProvinceBarChart(); },150);
-
-    if (CONFIG.SHEET_URL) {
-    loadDataFromGoogleSheet();
-  }
 });
 </script>
 
