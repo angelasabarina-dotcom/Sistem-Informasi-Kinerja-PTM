@@ -1,0 +1,2096 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIPTM – Sistem Informasi Kinerja Cascading P2PTM – Kemenkes RI 2025–2029</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ══ RESET & TOKENS ══ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D2B5E;--navy-mid:#1A3F7A;--navy-light:#2B5597;
+  --teal:#0F8C6B;--teal-light:#1DB38A;--teal-bg:#E6F5F0;
+  --orange:#E87040;--orange-bg:#FDF0E8;
+  --red:#C0392B;--red-bg:#FDECEA;
+  --amber:#C98500;--amber-bg:#FEF9E7;
+  --purple:#6B21A8;--purple-bg:#F3E8FF;
+  --gray-bg:#F2F5FA;--gray-border:#DDE1EC;
+  --gray-text:#6B7494;--text-dark:#0F1629;--text-mid:#3D4666;
+  --white:#FFFFFF;--sidebar-w:256px;
+  --radius:10px;--shadow:0 1px 4px rgba(13,43,94,.08);
+}
+html{font-size:14px}
+body{font-family:'Inter',sans-serif;color:var(--text-dark);background:var(--gray-bg);display:flex;min-height:100vh}
+button,input,select{font-family:'Inter',sans-serif}
+a{text-decoration:none}
+
+/* ══ SIDEBAR ══ */
+.sidebar{width:var(--sidebar-w);background:var(--navy);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto}
+.sidebar-brand{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.09)}
+.brand-logo{display:flex;align-items:center;gap:10px;color:white}
+.brand-icon{width:34px;height:34px;background:var(--teal);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0;letter-spacing:-.5px}
+.brand-text strong{font-size:12.5px;font-weight:700;letter-spacing:.02em;display:block}
+.brand-text span{font-size:10px;color:rgba(255,255,255,.42)}
+.sidebar-nav{padding:10px 8px;flex:1}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:12px 8px 5px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;margin-bottom:1px;color:rgba(255,255,255,.62);font-size:12.5px;font-weight:500;cursor:pointer;transition:all .15s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.08);color:white}
+.nav-item.active{background:var(--teal);color:white}
+.nav-item .nav-emoji{width:16px;text-align:center;flex-shrink:0;font-size:13px}
+.nav-badge{margin-left:auto;background:rgba(255,255,255,.15);font-size:10px;padding:1px 6px;border-radius:10px;color:rgba(255,255,255,.65)}
+.nav-item.active .nav-badge{background:rgba(255,255,255,.25);color:white}
+.nav-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 0}
+.sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);font-size:10.5px;color:rgba(255,255,255,.28);line-height:1.6}
+
+/* ══ MAIN ══ */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* ══ TOPBAR ══ */
+.topbar{background:var(--white);border-bottom:1px solid var(--gray-border);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-title{font-size:14px;font-weight:700;color:var(--text-dark)}
+.topbar-sub{font-size:11px;color:var(--gray-text)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.period-select{padding:5px 10px;border:1px solid var(--gray-border);border-radius:7px;font-size:12px;color:var(--text-mid);background:white;cursor:pointer}
+.topbar-badge{background:var(--navy);color:white;font-size:10.5px;font-weight:600;padding:4px 9px;border-radius:6px;letter-spacing:.02em}
+.crit-badge{background:var(--red-bg);color:var(--red);font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;display:flex;align-items:center;gap:5px}
+
+/* ══ PAGE ══ */
+.page{display:none;padding:22px 24px}
+.page.active{display:block}
+
+/* ══ DATA BANNER ══ */
+#data-banner{display:none;align-items:center;gap:10px;padding:8px 14px;border-radius:8px;margin-bottom:16px;font-size:12px}
+
+/* ══ HERO ══ */
+.hero{background:linear-gradient(108deg,var(--navy) 0%,var(--navy-light) 100%);border-radius:12px;padding:26px 32px;margin-bottom:20px;color:white;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-20px;top:-20px;width:200px;height:200px;background:rgba(15,140,107,.18);border-radius:50%}
+.hero::before{content:'';position:absolute;right:80px;bottom:-50px;width:130px;height:130px;background:rgba(232,112,64,.1);border-radius:50%}
+.hero-eyebrow{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-light);margin-bottom:8px}
+.hero-title{font-size:20px;font-weight:800;line-height:1.25;margin-bottom:7px;position:relative;z-index:1}
+.hero-title span{color:var(--teal-light)}
+.hero-desc{font-size:12px;color:rgba(255,255,255,.6);max-width:520px;line-height:1.6;position:relative;z-index:1}
+.hero-meta{margin-top:14px;display:flex;gap:20px;position:relative;z-index:1;flex-wrap:wrap}
+.hero-meta-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:rgba(255,255,255,.45)}
+.hero-meta-item strong{color:white;font-size:13px}
+
+/* ══ KPI ROW ══ */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-border);padding:14px 16px}
+.kpi-label{font-size:10.5px;color:var(--gray-text);font-weight:500;margin-bottom:4px}
+.kpi-value{font-size:26px;font-weight:800;color:var(--navy);line-height:1}
+.kpi-value.teal{color:var(--teal)}
+.kpi-value.orange{color:var(--orange)}
+.kpi-value.red{color:var(--red)}
+.kpi-sub{font-size:10px;color:var(--gray-text);margin-top:3px}
+
+/* ══ SECTION HEADER ══ */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+.section-title{font-size:13px;font-weight:700;color:var(--text-dark)}
+.section-action{font-size:11.5px;color:var(--teal);font-weight:600;cursor:pointer;display:flex;align-items:center;gap:3px;background:none;border:none}
+.section-action:hover{color:var(--teal-light)}
+
+/* ══ RINGKASAN 10 SKRINING (BERANDA) ══ */
+.disease-summary-table{width:100%;border-collapse:collapse;font-size:12px}
+.disease-summary-table th{text-align:left;padding:8px 10px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-text);border-bottom:1px solid var(--gray-border);background:var(--gray-bg)}
+.disease-summary-table td{padding:9px 10px;border-bottom:1px solid var(--gray-border);vertical-align:middle}
+.disease-summary-table tbody tr{cursor:pointer;transition:background .12s}
+.disease-summary-table tbody tr:hover{background:#F8FAFF}
+.disease-summary-table tbody tr:last-child td{border-bottom:none}
+.dz-name{font-weight:600;color:var(--text-dark)}
+.dz-emoji{margin-right:6px}
+.mini-bar-track{background:var(--gray-bg);border-radius:4px;height:6px;width:100%;overflow:hidden}
+.mini-bar-fill{height:100%;border-radius:4px;background:var(--teal)}
+
+/* ══ TABLE WRAP GENERAL ══ */
+.card-box{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-border);padding:16px}
+.bottom-row{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:20px}
+
+/* ══ SKRINING PAGE TOOLBAR ══ */
+.repo-toolbar{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-border);padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.search-box{flex:1;min-width:220px;display:flex;align-items:center;gap:7px;background:var(--gray-bg);border:1px solid var(--gray-border);border-radius:8px;padding:7px 10px}
+.search-box svg{color:var(--gray-text);flex-shrink:0;width:14px;height:14px}
+.search-box input{background:none;border:none;outline:none;font-size:12.5px;color:var(--text-dark);width:100%}
+.search-box input::placeholder{color:var(--gray-text)}
+.disease-select{padding:7px 10px;border:1px solid var(--gray-border);border-radius:8px;font-size:12px;color:var(--text-mid);background:white;cursor:pointer;min-width:220px}
+.filter-group{display:flex;gap:5px;flex-wrap:wrap}
+.filter-btn{padding:5px 11px;border-radius:16px;font-size:11.5px;font-weight:500;border:1px solid var(--gray-border);background:white;color:var(--text-mid);cursor:pointer;transition:all .15s}
+.filter-btn:hover{border-color:var(--teal);color:var(--teal)}
+.filter-btn.active{background:var(--navy);border-color:var(--navy);color:white}
+.toolbar-actions{display:flex;gap:7px}
+.action-btn{padding:7px 12px;border-radius:7px;font-size:11.5px;font-weight:600;border:1px solid var(--gray-border);background:white;color:var(--text-mid);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap}
+.action-btn.primary{border-color:var(--teal);color:var(--teal)}
+.action-btn.primary:hover{background:var(--teal);color:white}
+
+/* ══ LEGEND ══ */
+.legend-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--text-mid);margin-bottom:12px;background:var(--white);border:1px solid var(--gray-border);border-radius:var(--radius);padding:10px 14px}
+.legend-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+
+/* ══ MAIN INDICATOR TABLE (514 kab/kota) — STICKY HEADER ══ */
+.repo-table-wrap{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-border);overflow:hidden}
+.results-count{font-size:11.5px;color:var(--gray-text);padding:8px 14px;border-bottom:1px solid var(--gray-border);display:flex;justify-content:space-between;align-items:center}
+.table-scroll{max-height:68vh;overflow-y:auto;position:relative}
+.repo-table{width:100%;border-collapse:collapse}
+.repo-table thead th{position:sticky;top:0;z-index:5;text-align:left;padding:10px 12px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--navy);background:#EAF0F9;border-bottom:2px solid var(--gray-border);white-space:nowrap;box-shadow:0 1px 0 var(--gray-border)}
+.repo-table td{padding:9px 12px;border-bottom:1px solid var(--gray-border);font-size:12.5px;vertical-align:middle;white-space:nowrap}
+.repo-table tbody tr:last-child td{border-bottom:none}
+.repo-table tbody tr:hover{background:#F8FAFF}
+.repo-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.repo-table td.center{text-align:center}
+
+/* ══ FORM IMPOR / INPUT ══ */
+.input-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.input-field{display:flex;flex-direction:column;gap:6px}
+.input-field-full{grid-column:1/-1}
+.input-field label{font-size:11.5px;font-weight:600;color:var(--text-mid)}
+.input-field select,.input-field input{border:1px solid var(--gray-border);border-radius:8px;padding:9px 11px;font-size:12.5px;color:var(--text-dark);background:white}
+.input-field select:focus,.input-field input:focus{outline:none;border-color:var(--teal)}
+.input-form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.import-log-box{margin-top:14px;padding:10px 12px;background:var(--teal-bg);border-radius:8px;font-size:11px;color:#0F1629;line-height:1.6}
+.import-match-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px}
+.kode-wilayah{font-family:'Inter',monospace;color:var(--gray-text);font-size:11.5px}
+.prov-cell{font-weight:600;color:var(--text-dark)}
+.kab-cell{color:var(--text-mid)}
+.gap-cell{font-weight:700;text-align:center;border-radius:6px;padding:4px 10px;display:inline-block;min-width:60px}
+.gap-red{background:var(--red-bg);color:var(--red)}
+.gap-yellow{background:var(--amber-bg);color:var(--amber)}
+.gap-green{background:var(--teal-bg);color:var(--teal)}
+.rownum{color:var(--gray-text);font-size:11px}
+
+/* ══ UTILITIES ══ */
+.empty-state{text-align:center;padding:40px 20px;color:var(--gray-text)}
+.empty-state p{font-size:13px}
+.separator{height:1px;background:var(--gray-border);margin:16px 0}
+.note-box{background:var(--orange-bg);border-left:3px solid var(--orange);border-radius:0 8px 8px 0;padding:10px 14px;font-size:11.5px;color:#7A3800;line-height:1.6;margin-bottom:16px}
+.trend-section{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-border);padding:16px;margin-bottom:20px}
+.trend-chart-wrap{height:220px;position:relative}
+
+/* ══ DRILL-DOWN WILAYAH ══ */
+.drilldown-breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-text);margin-bottom:14px;flex-wrap:wrap}
+.breadcrumb-item{cursor:pointer;color:var(--teal);font-weight:500}
+.breadcrumb-item:hover{text-decoration:underline}
+.breadcrumb-sep{color:var(--gray-border)}
+.breadcrumb-current{color:var(--text-dark);font-weight:600}
+
+.province-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.province-card{background:white;border-radius:var(--radius);border:1px solid var(--gray-border);padding:13px;cursor:pointer;transition:all .15s}
+.province-card:hover{border-color:var(--teal);box-shadow:0 2px 12px rgba(15,140,107,.12)}
+.province-card-name{font-size:12.5px;font-weight:600;color:var(--text-dark);margin-bottom:6px;line-height:1.3;min-height:32px}
+.province-card-value{font-size:20px;font-weight:800;line-height:1}
+.province-card-sub{font-size:10px;color:var(--gray-text);margin-top:2px}
+.province-card-bar{height:4px;border-radius:2px;background:var(--gray-bg);overflow:hidden;margin-top:8px}
+.province-card-fill{height:100%;border-radius:2px}
+
+/* ══ BAR CHART 38 PROVINSI (BERANDA) ══ */
+.prov-barchart-wrap{height:880px;position:relative}
+
+@media(max-width:1300px){
+  .province-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:900px){
+  .province-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:1100px){
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+}
+
+/* ══ IT / ISS ROLLUP CARDS (BERANDA) ══ */
+.it-strip{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 16px;margin-top:16px;position:relative;z-index:1}
+.it-strip-label{font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.it-strip-value{font-size:18px;font-weight:800;color:white}
+.iss-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.iss-card{background:var(--white);border-radius:var(--radius);border:1px solid var(--gray-border);border-top:3px solid var(--teal);padding:14px 16px;cursor:pointer;transition:all .15s}
+.iss-card:hover{box-shadow:0 4px 16px rgba(13,43,94,.1);transform:translateY(-1px)}
+.iss-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:10px}
+.iss-code-badge{font-size:10px;font-weight:700;color:var(--teal);letter-spacing:.03em}
+.iss-rank-dot{width:20px;height:20px;border-radius:6px;background:var(--teal-bg);color:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:10.5px;flex-shrink:0}
+.iss-card-name{font-size:12px;font-weight:700;color:var(--text-dark);line-height:1.35;min-height:32px;margin-bottom:10px}
+.iss-ring-wrap{display:flex;align-items:center;gap:12px}
+.iss-ring-num{font-size:19px;font-weight:800;font-family:'Inter'}
+.iss-ring-lbl{font-size:9.5px;color:var(--gray-text);margin-top:1px}
+.iss-card-foot{font-size:10px;color:var(--gray-text);border-top:1px dashed var(--gray-border);margin-top:10px;padding-top:8px;display:flex;justify-content:space-between}
+
+/* ══ PETA CASCADING (INTERAKTIF) ══ */
+.cascade-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.cascade-chip{padding:6px 13px;border-radius:16px;font-size:11.5px;font-weight:600;border:1px solid var(--gray-border);background:white;color:var(--text-mid);cursor:pointer}
+.cascade-chip.active{background:var(--navy);border-color:var(--navy);color:white}
+.cascade-tier{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start;margin-bottom:18px}
+.cascade-tier-label{background:var(--teal-bg);border-radius:8px;padding:10px;display:flex;flex-direction:column;justify-content:center}
+.cascade-tier-label b{font-size:11px;color:var(--teal)}
+.cascade-tier-label span{font-size:9.5px;color:var(--gray-text);margin-top:2px}
+.cascade-track{display:flex;flex-wrap:wrap;gap:10px}
+.cnode-it{background:var(--navy);color:white;border-radius:10px;padding:14px 18px;font-weight:700;font-size:13px;width:100%}
+.cnode-iss{background:var(--teal-bg);border:1px solid #C9E7DC;border-radius:10px;padding:11px 14px;min-width:220px;flex:1;cursor:pointer;transition:.15s}
+.cnode-iss:hover{border-color:var(--teal)}
+.cnode-iss.selected{background:var(--teal);border-color:var(--teal)}
+.cnode-iss.selected *{color:white !important}
+.cnode-ikp{background:white;border:1px solid var(--gray-border);border-radius:9px;padding:10px 12px;width:200px;cursor:pointer;transition:.15s}
+.cnode-ikp:hover{border-color:var(--teal)}
+.cnode-ikp.selected{border-color:var(--navy);background:#EAF0F9}
+.cnode-code{font-size:10px;font-weight:800;color:var(--teal);letter-spacing:.02em}
+.cnode-name{font-size:11.8px;font-weight:700;color:var(--text-dark);margin:3px 0 2px;line-height:1.35}
+.cnode-target{font-size:10.5px;color:var(--gray-text)}
+.ikk-panel-box{background:white;border:1px solid var(--gray-border);border-radius:10px;padding:16px 18px;width:100%}
+.ikk-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ikk-panel-head h4{font-size:12.5px;font-weight:700}
+.ikk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.ikk-card{border:1px solid var(--gray-border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:.15s}
+.ikk-card:hover{border-color:var(--teal);background:#F8FDFB}
+.ikk-card-top{font-size:11.5px;font-weight:600;margin-bottom:7px;display:flex;justify-content:space-between;gap:8px}
+.ikk-card-top .code{color:var(--gray-text);font-weight:700;font-size:10px;display:block}
+.empty-hint-box{text-align:center;color:var(--gray-text);font-size:12px;padding:22px;border:1px dashed var(--gray-border);border-radius:10px}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo">
+      <div class="brand-icon">P2P</div>
+      <div class="brand-text">
+        <strong>SIPTM Cascading</strong>
+        <span>Direktorat P2PTM – Kemenkes RI</span>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Menu Utama</div>
+    <button class="nav-item active" data-page="beranda" onclick="navigate('beranda')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Beranda
+    </button>
+    <button class="nav-item" data-page="cascading" onclick="navigate('cascading')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="4" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="20" r="2"/><circle cx="19" cy="20" r="2"/><path d="M12 6v4M8.5 12h-2M15.5 12h2M6 14v4M18 14v4"/></svg>
+      Peta Cascading
+      <span class="nav-badge">IT·ISS·IKP·IKK</span>
+    </button>
+    <button class="nav-item" data-page="skrining" onclick="navigate('skrining')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Tabel Indikator
+      <span class="nav-badge">514 Kab/Kota</span>
+    </button>
+    <button class="nav-item" data-page="drilldown" onclick="navigate('drilldown')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Drill-Down Wilayah
+      <span class="nav-badge">38 Provinsi</span>
+    </button>
+    <button class="nav-item" data-page="import" onclick="navigate('import')">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 20h16"/></svg>
+      Impor Data Massal
+    </button>
+
+    <div class="nav-divider"></div>
+    <div class="nav-label">26 IKK · Berdasarkan ISS/IKP</div>
+    <div id="disease-nav-list"></div>
+
+    <div class="nav-divider"></div>
+    <div class="nav-label">Pengaturan</div>
+    <button class="nav-item" onclick="showConfigPanel()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Hubungkan Google Sheets
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    Mengikuti Peta Cascading Indikator Kinerja Direktorat P2PTM 2026: 1 IT · 3 ISS · 9 IKP · 26 IKK.
+  </div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="topbar-title" id="topbar-title">Beranda</div>
+        <div class="topbar-sub" id="topbar-sub">Sistem Informasi Kinerja Cascading — IT, ISS, IKP &amp; IKK P2PTM</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <select class="period-select" id="period-select" onchange="onPeriodChange()">
+        <option value="Q1-2026">Q1 2026</option>
+        <option value="Q2-2026" selected>Q2 2026</option>
+        <option value="Q3-2026">Q3 2026</option>
+        <option value="Q4-2026">Q4 2026</option>
+      </select>
+      <div class="crit-badge" id="crit-badge">
+        ⚠ <span id="crit-count">0</span> Kab/Kota Sangat Tertinggal
+      </div>
+      <div class="topbar-badge">PMK No. 12 / 2025</div>
+    </div>
+  </div>
+
+  <div id="data-banner" style="margin:16px 24px 0"></div>
+
+  <!-- ══ BERANDA ══ -->
+  <div class="page active" id="beranda">
+
+    <div class="hero">
+      <div class="hero-eyebrow">Direktorat Pencegahan &amp; Pengendalian Penyakit Tidak Menular</div>
+      <div class="hero-title">Sistem Informasi Kinerja Cascading<br><span>Seluruh Indikator P2PTM Tahun 2026</span></div>
+      <div class="hero-desc">Platform pemantauan capaian yang kini mencakup <strong>seluruh Peta Cascading</strong> Direktorat P2PTM — bukan hanya skrining PTM prioritas — mulai dari Indikator Tingkat (Usia Harapan Hidup Sehat), 3 Indikator Sasaran Strategis, 9 Indikator Kinerja Program, hingga 26 Indikator Kinerja Kegiatan di seluruh kabupaten/kota Indonesia.</div>
+      <div class="hero-meta">
+        <div class="hero-meta-item"><strong>3</strong>&nbsp;ISS</div>
+        <div class="hero-meta-item"><strong>·</strong></div>
+        <div class="hero-meta-item"><strong>9</strong>&nbsp;IKP</div>
+        <div class="hero-meta-item"><strong>·</strong></div>
+        <div class="hero-meta-item"><strong>26</strong>&nbsp;IKK</div>
+        <div class="hero-meta-item"><strong>·</strong></div>
+        <div class="hero-meta-item"><strong>514</strong>&nbsp;Kab/Kota Sasaran</div>
+      </div>
+      <div class="it-strip">
+        <div>
+          <div class="it-strip-label">IT 1 · Usia Harapan Hidup Sehat</div>
+          <div class="it-strip-value">Target 2026: 63,5 Tahun</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ISS ROLLUP ROW -->
+    <div class="section-hdr">
+      <div class="section-title">🎯 3 Indikator Sasaran Strategis (ISS) — Rollup dari IKP di Bawahnya</div>
+      <button class="section-action" onclick="navigate('cascading')">Buka Peta Cascading →</button>
+    </div>
+    <div class="iss-row" id="iss-row"></div>
+
+    <!-- BAR CHART CAPAIAN PER PROVINSI (38 PROVINSI) -->
+    <div class="trend-section">
+      <div class="section-hdr">
+        <div class="section-title">📊 Capaian 26 IKK Gabungan per Provinsi — Triwulan Berjalan</div>
+        <button class="section-action" onclick="navigate('drilldown')">Drill-down wilayah →</button>
+      </div>
+      <div class="note-box" style="margin-bottom:12px">Nilai capaian tiap provinsi merupakan <strong>akumulasi/rata-rata</strong> dari seluruh 26 IKK yang terintegrasi di seluruh kabupaten/kota pada provinsi tersebut, untuk periode triwulan yang dipilih di kanan atas (<span id="period-label-chart">Q2 2026</span>).</div>
+      <div class="prov-barchart-wrap"><canvas id="province-bar-chart"></canvas></div>
+    </div>
+
+    <!-- RINGKASAN 26 IKK -->
+    <div class="section-hdr">
+      <div class="section-title">📊 Ringkasan Capaian 26 Indikator Kinerja Kegiatan (IKK) — Nasional (Q2 2026)</div>
+      <button class="section-action" onclick="navigate('skrining')">Lihat tabel lengkap →</button>
+    </div>
+    <div class="bottom-row">
+      <div class="card-box">
+        <table class="disease-summary-table">
+          <thead>
+            <tr>
+              <th>Indikator (IKK)</th>
+              <th>Induk IKP / ISS</th>
+              <th>Target</th>
+              <th>Rata-rata Capaian (%)</th>
+              <th style="min-width:110px">Progres</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="disease-summary-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /beranda -->
+
+  <!-- ══ PETA CASCADING INTERAKTIF ══ -->
+  <div class="page" id="cascading">
+    <div class="note-box">Klik salah satu kartu ISS untuk memfilter IKP di bawahnya, lalu klik salah satu kartu IKP untuk menampilkan rincian IKK-nya. Persentase capaian dihitung dari rata-rata data 514 kab/kota pada periode triwulan yang sedang dipilih.</div>
+    <div class="cascade-chip-row" id="cascade-chips"></div>
+
+    <div class="cascade-tier">
+      <div class="cascade-tier-label"><b>IT</b><span>Indikator Tingkat</span></div>
+      <div class="cascade-track">
+        <div class="cnode-it">IT 1 · Usia Harapan Hidup Sehat &nbsp;·&nbsp; Target: 63,5 Tahun</div>
+      </div>
+    </div>
+
+    <div class="cascade-tier">
+      <div class="cascade-tier-label"><b>ISS</b><span>Sasaran Strategis</span></div>
+      <div class="cascade-track" id="cascade-iss-track"></div>
+    </div>
+
+    <div class="cascade-tier">
+      <div class="cascade-tier-label"><b>IKP</b><span>Kinerja Program</span></div>
+      <div class="cascade-track" id="cascade-ikp-track"></div>
+    </div>
+
+    <div class="cascade-tier">
+      <div class="cascade-tier-label"><b>IKK</b><span>Kinerja Kegiatan</span></div>
+      <div class="cascade-track" style="width:100%">
+        <div class="ikk-panel-box">
+          <div class="ikk-panel-head">
+            <h4 id="ikk-panel-title">Pilih salah satu IKP di atas untuk melihat rincian IKK</h4>
+            <span style="font-size:11px;color:var(--gray-text)" id="ikk-panel-count"></span>
+          </div>
+          <div id="ikk-panel-body"><div class="empty-hint-box">Rincian Indikator Kinerja Kegiatan akan tampil di sini, lengkap dengan capaian nasional real-time dari 514 kab/kota.</div></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /cascading -->
+
+  <!-- ══ SKRINING PENYAKIT (TABEL INDIKATOR UTAMA) ══ -->
+  <div class="page" id="skrining">
+    <div class="legend-row">
+      <strong style="color:var(--text-dark)">Keterangan warna kolom %:</strong>
+      <span><span class="legend-dot" style="background:var(--red)"></span>Merah — selisih dari target &gt; 50% (Sangat tertinggal)</span>
+      <span><span class="legend-dot" style="background:var(--amber)"></span>Kuning — selisih dari target 20–50% (Perlu perhatian)</span>
+      <span><span class="legend-dot" style="background:var(--teal)"></span>Hijau — selisih dari target &lt; 20% (Sudah mendekati target)</span>
+      <span>﹡ Jumlah sasaran (Target) belum tersedia — kab/kota ini belum diimpor lewat Impor Data Massal</span>
+    </div>
+
+    <div class="repo-toolbar">
+      <div class="search-box">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" placeholder="Cari kode wilayah, provinsi, atau kabupaten/kota...">
+      </div>
+      <select class="disease-select" id="disease-select" onchange="onDiseaseSelectChange()"></select>
+      <div class="filter-group">
+        <button class="filter-btn active" data-status="all">Semua</button>
+        <button class="filter-btn" data-status="merah">🔴 Sangat Tertinggal</button>
+        <button class="filter-btn" data-status="kuning">🟡 Perlu Perhatian</button>
+        <button class="filter-btn" data-status="hijau">🟢 Mendekati Target</button>
+      </div>
+      <div class="toolbar-actions">
+        <button class="action-btn primary" onclick="exportCSV()">⬇ Unduh CSV</button>
+      </div>
+    </div>
+
+    <div class="repo-table-wrap">
+      <div class="results-count">
+        <span id="results-count-text">Memuat...</span>
+        <span id="results-summary" style="color:var(--gray-text)"></span>
+      </div>
+      <div class="table-scroll">
+        <table class="repo-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Kode Wilayah</th>
+              <th>Provinsi</th>
+              <th>Kabupaten/Kota</th>
+              <th>Target (Sasaran)</th>
+              <th>Capaian</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody id="repo-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /skrining -->
+
+  <!-- ══ DRILL-DOWN WILAYAH ══ -->
+  <div class="page" id="drilldown">
+    <div class="drilldown-breadcrumb" id="breadcrumb">
+      <span class="breadcrumb-current">🇮🇩 Nasional — 38 Provinsi</span>
+    </div>
+    <div class="section-hdr">
+      <div class="section-title" id="drill-title">Capaian Skrining per Provinsi</div>
+      <select id="drill-disease-select" onchange="renderDrilldown()" style="padding:5px 10px;border:1px solid var(--gray-border);border-radius:7px;font-size:11.5px;background:white;min-width:230px"></select>
+    </div>
+    <div class="note-box">Klik salah satu kartu provinsi untuk melihat rincian capaian di seluruh kabupaten/kota provinsi tersebut (disesuaikan otomatis dari 514 kab/kota nasional).</div>
+    <div class="province-grid" id="province-grid"></div>
+    <div class="card-box" id="drill-detail-box" style="display:none"></div>
+  </div><!-- /drilldown -->
+
+  <!-- ══ IMPOR DATA MASSAL ══ -->
+  <div class="page" id="import">
+    <div class="note-box">Gunakan halaman ini untuk mengisi capaian <strong>514 kabupaten/kota sekaligus untuk satu IKK</strong> lewat Google Sheets, alih-alih memasukkan data satu per satu. Template sudah menyertakan kolom <strong>target</strong> per kab/kota (default = target nasional indikator ini), silakan ubah angkanya kalau target daerah tersebut memang berbeda dari target nasional. Pilih dulu indikatornya, unduh template, isi di Spreadsheet, publikasikan sebagai CSV, lalu tarik kembali ke sini.</div>
+
+    <div class="card-box" style="max-width:900px;margin-bottom:16px">
+      <div class="section-hdr" style="margin-bottom:14px">
+        <div class="section-title">① Pilih Indikator (IKK) yang Akan Diimpor</div>
+      </div>
+      <div class="input-form-grid">
+        <div class="input-field input-field-full">
+          <label>Indikator Kinerja Kegiatan (IKK)</label>
+          <select id="import-ikk-select" onchange="onImportIkkChange()"></select>
+        </div>
+        <div class="input-field">
+          <label>Periode Data (Triwulan)</label>
+          <select id="import-periode">
+            <option value="Q1-2026">Q1 2026</option>
+            <option value="Q2-2026" selected>Q2 2026</option>
+            <option value="Q3-2026">Q3 2026</option>
+            <option value="Q4-2026">Q4 2026</option>
+          </select>
+        </div>
+        <div class="input-field">
+          <label>&nbsp;</label>
+          <button class="action-btn" onclick="downloadImportTemplate()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 3v13M7 11l5 5 5-5"/><path d="M4 21h16"/></svg>
+            Unduh Template CSV untuk Indikator Ini
+          </button>
+        </div>
+      </div>
+      <div id="import-last-log" class="import-log-box" style="display:none"></div>
+    </div>
+
+    <div class="card-box" style="max-width:900px;margin-bottom:16px">
+      <div class="section-hdr" style="margin-bottom:14px">
+        <div class="section-title">② Tempel Link Google Sheets (Publish to Web → CSV)</div>
+      </div>
+      <div class="input-form-grid">
+        <div class="input-field input-field-full">
+          <label>URL CSV Google Sheets</label>
+          <input type="text" id="import-sheet-url" placeholder="https://docs.google.com/spreadsheets/d/…/pub?output=csv">
+        </div>
+      </div>
+      <div class="input-form-actions" style="justify-content:flex-start;margin-top:14px">
+        <button class="action-btn primary" onclick="fetchAndPreviewImport()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Tarik &amp; Pratinjau Data
+        </button>
+      </div>
+      <div id="import-status-msg" style="font-size:11.5px;margin-top:10px"></div>
+    </div>
+
+    <div class="card-box" id="import-preview-box" style="display:none;max-width:900px">
+      <div class="section-hdr" style="margin-bottom:12px">
+        <div class="section-title">③ Pratinjau &amp; Terapkan</div>
+      </div>
+      <div id="import-preview-summary"></div>
+      <div class="table-scroll" style="max-height:320px;margin-top:10px">
+        <table class="repo-table">
+          <thead><tr><th>#</th><th>Kode Wilayah</th><th>Kab/Kota (Sheet)</th><th>Kab/Kota (Cocok Sistem)</th><th>Denominator (Sasaran)</th><th>Numerator</th><th>Capaian (%)</th></tr></thead>
+          <tbody id="import-preview-tbody"></tbody>
+        </table>
+      </div>
+      <div class="input-form-actions">
+        <button class="action-btn" onclick="cancelImportPreview()">Batalkan</button>
+        <button class="action-btn primary" id="import-apply-btn" onclick="applyImportedData()">
+          <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          Terapkan ke Indikator Ini
+        </button>
+      </div>
+    </div>
+  </div><!-- /import -->
+
+</main>
+
+<!-- CONFIG MODAL -->
+<div class="modal-overlay" id="config-modal" style="display:none;position:fixed;inset:0;background:rgba(13,43,94,.35);z-index:300;align-items:center;justify-content:center">
+  <div class="modal" style="background:white;border-radius:12px;padding:22px 24px;max-width:440px;width:90%">
+    <div style="font-size:15px;font-weight:700;margin-bottom:8px">🔗 Hubungkan Google Sheets</div>
+    <div style="font-size:12px;color:var(--gray-text);margin-bottom:14px;line-height:1.6">Setelah terhubung, staf dapat memperbarui data kode wilayah dan capaian langsung dari spreadsheet tanpa menyentuh kode.</div>
+    <ol style="font-size:12px;color:var(--text-mid);padding-left:18px;line-height:1.9;margin-bottom:12px">
+      <li>Buka Google Sheets → File → <strong>Share</strong> → <strong>Publish to web</strong></li>
+      <li>Pilih sheet data wilayah Anda → Format: <strong>Comma-separated values (.csv)</strong></li>
+      <li>Klik <strong>Publish</strong> → salin link yang muncul</li>
+      <li>Tempel link di bawah ini</li>
+    </ol>
+    <input type="url" id="cfg-url" placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" style="width:100%;padding:8px 10px;border:1px solid var(--gray-border);border-radius:8px;font-size:12px;margin-bottom:10px">
+    <div id="cfg-status" style="min-height:20px;font-size:12px;margin-bottom:10px"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button onclick="hideConfigPanel()" style="padding:7px 14px;border-radius:7px;border:1px solid var(--gray-border);background:white;cursor:pointer;font-size:12px">Batal</button>
+      <button onclick="testConnection()" style="padding:7px 14px;border-radius:7px;border:1.5px solid var(--navy);background:white;color:var(--navy);cursor:pointer;font-size:12px">Test Koneksi</button>
+      <button onclick="saveConfig()" style="padding:7px 14px;border-radius:7px;border:none;background:var(--teal);color:white;cursor:pointer;font-size:12px;font-weight:600">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CATATAN: Data kode wilayah, nama provinsi/kab-kota, dan capaian
+// di bawah ini bersifat CONTOH (dummy) untuk keperluan demo tampilan.
+// Silakan ganti PROVINSI_DATA & logika capaian dengan data riil Anda
+// (kode wilayah BPS + capaian aktual per kab/kota), atau hubungkan
+// melalui Google Sheets pada menu Pengaturan.
+// ══════════════════════════════════════════════════════════════
+
+const CONFIG = { SHEET_URL: '' };
+
+// ══════════════════════════════════════════════════════════════
+// FIREBASE REALTIME DATABASE — penyimpanan data impor bersama,
+// supaya semua pengunjung/staf melihat data yang sama & permanen.
+// Menggunakan REST API biasa (fetch), tanpa perlu Firebase SDK.
+// ══════════════════════════════════════════════════════════════
+const FIREBASE_URL = 'https://sistem-informasi-kinerja-ptm-default-rtdb.firebaseio.com';
+// Firebase tidak mengizinkan karakter . # $ / [ ] pada key, sedangkan kode
+// wilayah kita berbentuk "32.01" — maka disanitasi dulu untuk dipakai sebagai key.
+function fbKeySafe(s){ return String(s).replace(/[.#$\/\[\]]/g,'_'); }
+
+// Ambil seluruh data yang pernah diimpor (semua indikator & periode) + riwayat impor
+async function fbLoadAll(){
+  try{
+    const res = await fetch(`${FIREBASE_URL}/ikk_data.json`);
+    if(res.ok){
+      const data = await res.json();
+      if(data){
+        Object.keys(data).forEach(diseaseKey=>{
+          const periods = data[diseaseKey] || {};
+          Object.keys(periods).forEach(periode=>{
+            const rows = periods[periode] || {};
+            Object.keys(rows).forEach(safeKode=>{
+              const v = rows[safeKode] || {};
+              const kode = v.kodeWilayah || safeKode;
+              IMPORTED_DATA[overrideKey(diseaseKey, kode, periode)] = { capaian:v.capaian, numerator:v.numerator, denominator:v.denominator };
+            });
+          });
+        });
+      }
+    }
+  }catch(e){ console.warn('Gagal memuat data dari Firebase, memakai data lokal/simulasi:', e); }
+
+  try{
+    const res2 = await fetch(`${FIREBASE_URL}/import_log.json`);
+    if(res2.ok){
+      const log = await res2.json();
+      if(log){ Object.keys(log).forEach(k=>{ IMPORT_LOG[k] = log[k]; }); }
+    }
+  }catch(e){ console.warn('Gagal memuat riwayat impor dari Firebase:', e); }
+}
+
+// Simpan seluruh baris hasil impor satu indikator+periode (menimpa data lama utk kombinasi itu)
+async function fbSaveIndicatorPeriod(diseaseKey, periode, rowsObj){
+  const res = await fetch(`${FIREBASE_URL}/ikk_data/${encodeURIComponent(diseaseKey)}/${encodeURIComponent(periode)}.json`, {
+    method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(rowsObj)
+  });
+  if(!res.ok) throw new Error('HTTP '+res.status);
+}
+async function fbSaveLog(diseaseKey, logObj){
+  const res = await fetch(`${FIREBASE_URL}/import_log/${encodeURIComponent(diseaseKey)}.json`, {
+    method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(logObj)
+  });
+  if(!res.ok) throw new Error('HTTP '+res.status);
+}
+
+// ── PETA CASCADING KEMENKES 2026: IT 1 → 3 ISS → 9 IKP → 26 IKK ──
+const IT_DATA = { code:'IT 1', name:'Usia Harapan Hidup Sehat', target:'63,5 Tahun' };
+
+const ISS_LIST = [
+  { code:'ISS 4',  rank:1, name:'Angka Harapan Hidup Sehat pada Umur 60 Tahun (HALE60)', target:'5,5%' },
+  { code:'ISS 8',  rank:1, name:'Angka Populasi Bebas Penyakit Tidak Menular',            target:'55%' },
+  { code:'ISS 13', rank:2, name:'Prevalensi Obesitas ≥18 Tahun',                          target:'23,4%' },
+];
+const ISS_MAP = Object.fromEntries(ISS_LIST.map(i=>[i.code,i]));
+
+const IKP_LIST = [
+  { code:'IKP 4.3',  issCode:'ISS 4',  name:'Persentase kab/kota yang menyelenggarakan skrining PTM prioritas',              target:100 },
+  { code:'IKP 8.1',  issCode:'ISS 8',  name:'Persentase hipertensi dalam pengendalian',                                     target:25 },
+  { code:'IKP 8.2',  issCode:'ISS 8',  name:'Persentase diabetes dalam pengendalian',                                       target:17.5 },
+  { code:'IKP 8.3',  issCode:'ISS 8',  name:'Kab/kota yang mengimplementasikan target pra-eliminasi kanker leher rahim',    target:5 },
+  { code:'IKP 8.4',  issCode:'ISS 8',  name:'Persentase kab/kota yang melakukan deteksi dini kanker prioritas',             target:35 },
+  { code:'IKP 8.5',  issCode:'ISS 8',  name:'Persentase penduduk 60+ pada populasi 10–21 tahun (layanan lansia/UBM/KTR)',    target:11.4 },
+  { code:'IKP 8.6',  issCode:'ISS 8',  name:'Cakupan pangan beredar sesuai batas maksimal kandungan GGL',                   target:20 },
+  { code:'IKP 8.7',  issCode:'ISS 8',  name:'Persentase kab/kota yang menyelenggarakan skrining risiko stroke pada 80% Puskesmas', target:19 },
+  { code:'IKP 13.1', issCode:'ISS 13', name:'Persentase kab/kota yang memiliki proporsi obesitas < 23,4%',                  target:54 },
+];
+const IKP_MAP = Object.fromEntries(IKP_LIST.map(i=>[i.code,i]));
+
+// ── 26 INDIKATOR KINERJA KEGIATAN (IKK) — turunan seluruh 9 IKP di atas ──
+// Catatan: untuk IKK yang aslinya bertarget berupa JUMLAH kab/kota (bukan %),
+// field target dikonversi menjadi % dari 514 kab/kota agar dapat disimulasikan
+// per-wilayah seperti indikator lain; targetLabel menyimpan teks aslinya untuk ditampilkan.
+const DISEASES = [
+  // IKP 4.3 — Skrining PTM Prioritas
+  { key:'skrining_obesitas',      label:'Skrining Obesitas',                          emoji:'⚖️', target:60,  ikpCode:'IKP 4.3',  desc:'Skrining obesitas pada populasi target' },
+  { key:'skrining_hipertensi',    label:'Skrining Hipertensi',                        emoji:'❤️', target:70,  ikpCode:'IKP 4.3',  desc:'Skrining hipertensi pada populasi target' },
+  { key:'skrining_penglihatan',   label:'Skrining Tajam Penglihatan',                 emoji:'👁️', target:70,  ikpCode:'IKP 4.3',  desc:'Skrining tajam penglihatan pada populasi target' },
+  { key:'skrining_pendengaran',   label:'Skrining Tajam Pendengaran',                 emoji:'👂', target:70,  ikpCode:'IKP 4.3',  desc:'Skrining tajam pendengaran pada populasi target' },
+  { key:'skrining_ppok',          label:'Skrining PPOK',                              emoji:'🫁', target:50,  ikpCode:'IKP 4.3',  desc:'Skrining fungsi paru pada populasi target' },
+  { key:'skrining_gigi_mulut',    label:'Skrining Gigi dan Mulut',                    emoji:'🦷', target:30,  ikpCode:'IKP 4.3',  desc:'Skrining gigi & mulut pada populasi target' },
+  { key:'skrining_talasemia',     label:'Skrining Talasemia',                         emoji:'🧬', target:30,  ikpCode:'IKP 4.3',  desc:'Skrining talasemia pada populasi target' },
+  { key:'skrining_sle',           label:'Skrining SLE',                               emoji:'🩺', target:50,  ikpCode:'IKP 4.3',  desc:'Skrining SLE pada populasi target' },
+  { key:'pkg_dewasa',             label:'Penduduk Penerima PKG Usia Dewasa',          emoji:'📋', target:45,  ikpCode:'IKP 4.3',  desc:'Persentase penduduk penerima PKG kelompok usia dewasa' },
+  // IKP 8.1 — Hipertensi dalam Pengendalian
+  { key:'hipertensi_yankes',      label:'Hipertensi Mendapat Pelayanan Sesuai Standar', emoji:'❤️', target:15, ikpCode:'IKP 8.1', desc:'Penderita hipertensi mendapatkan pelayanan sesuai standar' },
+  { key:'skrining_ekg_jantung',   label:'Skrining Faktor Risiko Jantung (EKG)',       emoji:'🫀', target:30,  ikpCode:'IKP 8.1',  desc:'Cakupan skrining faktor risiko penyakit jantung dengan EKG' },
+  { key:'skrining_ginjal_kronis', label:'Skrining Penyakit Ginjal Kronis (eLFG/UACR)', emoji:'🧪', target:30, ikpCode:'IKP 8.1',  desc:'Cakupan skrining penyakit ginjal kronis' },
+  // IKP 8.2 — Diabetes dalam Pengendalian
+  { key:'skrining_dm',            label:'Kab/Kota Skrining DM > 60%',                 emoji:'🩸', target:13.6, targetLabel:'70 Kab/Kota', isCount:true, ikpCode:'IKP 8.2', desc:'Jumlah kab/kota yang melakukan skrining DM pada >60% populasi target' },
+  // IKP 8.3 — Pra-eliminasi Kanker Leher Rahim
+  { key:'lesi_prakanker',         label:'Pengobatan Lesi Pra-Kanker Sesuai Protokol', emoji:'🎗️', target:60,  ikpCode:'IKP 8.3',  desc:'Perempuan dengan lesi pra-kanker leher rahim yang mendapat pengobatan sesuai protokol' },
+  { key:'tindak_lanjut_hpv',      label:'Tindak Lanjut DNA HPV(+) (IVA/Kolposkopi/PAPs)', emoji:'🧬', target:50, ikpCode:'IKP 8.3', desc:'Perempuan dengan DNA HPV(+) yang ditindaklanjuti sesuai protokol' },
+  // IKP 8.4 — Deteksi Dini Kanker Prioritas
+  { key:'skrining_kanker_payudara', label:'Skrining Kanker Payudara',                 emoji:'🎗️', target:60,  ikpCode:'IKP 8.4',  desc:'Skrining kanker payudara pada populasi target' },
+  { key:'skrining_kanker_paru',    label:'Skrining Kanker Paru',                      emoji:'🫁', target:25,  ikpCode:'IKP 8.4',  desc:'Skrining kanker paru pada populasi target' },
+  { key:'skrining_kanker_kolorektal', label:'Skrining Kanker Kolorektal',             emoji:'🧫', target:25,  ikpCode:'IKP 8.4',  desc:'Skrining kanker kolorektal pada populasi target' },
+  { key:'yantu_ptm_puskesmas',     label:'Puskesmas Layanan Terpadu PTM ≥80% Kunjungan', emoji:'🏥', target:30, ikpCode:'IKP 8.4', desc:'Kab/kota yang puskesmasnya melaksanakan Pelayanan Terpadu PTM pada ≥80% kunjungan' },
+  // IKP 8.5 — Layanan Lansia / UBM / KTR
+  { key:'ubm_layanan',             label:'Kab/Kota Layanan Upaya Berhenti Merokok',   emoji:'🚭', target:63.2, targetLabel:'325 Kab/Kota', isCount:true, ikpCode:'IKP 8.5', desc:'Jumlah kab/kota yang melakukan pelayanan Upaya Berhenti Merokok (UBM)' },
+  { key:'ktr_penerapan',           label:'Kab/Kota Menerapkan Kawasan Tanpa Rokok',   emoji:'🚫', target:42,  ikpCode:'IKP 8.5',  desc:'Meningkatnya kab/kota yang menerapkan Kawasan Tanpa Rokok (KTR)' },
+  { key:'farmakoterapi_ubm',       label:'Puskesmas Layanan Farmakoterapi UBM',       emoji:'💊', target:6,   ikpCode:'IKP 8.5',  desc:'Persentase puskesmas yang memberikan layanan farmakoterapi untuk UBM' },
+  // IKP 8.6 — Konsumsi Gula, Garam, Lemak
+  { key:'pengendalian_ggl',        label:'Kab/Kota Pengendalian Konsumsi Gula Garam Lemak', emoji:'🧂', target:19, ikpCode:'IKP 8.6', desc:'Persentase kab/kota yang melakukan pengendalian konsumsi gula, garam, lemak' },
+  // IKP 8.7 — Skrining Risiko Stroke
+  { key:'skrining_risiko_stroke',  label:'Skrining Risiko Stroke',                    emoji:'🧠', target:50,  ikpCode:'IKP 8.7',  desc:'Skrining risiko stroke pada populasi target' },
+  // IKP 13.1 — Pengendalian Obesitas
+  { key:'puskesmas_kelola_obesitas', label:'Puskesmas Aktif Kelola Faktor Risiko Obesitas', emoji:'⚖️', target:100, ikpCode:'IKP 13.1', desc:'Kab/kota dengan ≥80% Puskesmas aktif mengelola faktor risiko obesitas' },
+  { key:'penurunan_kurang_aktivitas', label:'Penurunan Penduduk Kurang Aktivitas Fisik', emoji:'🏃', target:19.5, targetLabel:'100 Kab/Kota', isCount:true, ikpCode:'IKP 13.1', desc:'Penurunan relatif persentase penduduk yang kurang aktivitas fisik' },
+];
+const DISEASE_MAP = Object.fromEntries(DISEASES.map(d=>[d.key,d]));
+
+// ── Helper: dapatkan objek IKP & ISS induk dari sebuah indikator (IKK) ──
+function parentIKP(dz){ return IKP_MAP[dz.ikpCode]; }
+function parentISS(dz){ const ikp = parentIKP(dz); return ikp ? ISS_MAP[ikp.issCode] : null; }
+function ikkByIkp(ikpCode){ return DISEASES.filter(d=>d.ikpCode===ikpCode); }
+function ikpByIss(issCode){ return IKP_LIST.filter(k=>k.issCode===issCode); }
+
+// ── 38 PROVINSI (nama), sesuai data resmi kode wilayah kabupaten/kota ──
+const PROVINSI_DATA = [
+  { nama:'Aceh' },
+  { nama:'Bali' },
+  { nama:'Bangka Belitung' },
+  { nama:'Banten' },
+  { nama:'Bengkulu' },
+  { nama:'D I Yogyakarta' },
+  { nama:'DKJ Jakarta' },
+  { nama:'Gorontalo' },
+  { nama:'Jambi' },
+  { nama:'Jawa Barat' },
+  { nama:'Jawa Tengah' },
+  { nama:'Jawa Timur' },
+  { nama:'Kalimantan Barat' },
+  { nama:'Kalimantan Selatan' },
+  { nama:'Kalimantan Tengah' },
+  { nama:'Kalimantan Timur' },
+  { nama:'Kalimantan Utara' },
+  { nama:'Kep. Riau' },
+  { nama:'Lampung' },
+  { nama:'Maluku' },
+  { nama:'Maluku Utara' },
+  { nama:'Nusa Tenggara Barat' },
+  { nama:'Nusa Tenggara Timur' },
+  { nama:'Papua' },
+  { nama:'Papua Barat' },
+  { nama:'Papua Barat Daya' },
+  { nama:'Papua Pegunungan' },
+  { nama:'Papua Selatan' },
+  { nama:'Papua Tengah' },
+  { nama:'Riau' },
+  { nama:'Sulawesi Barat' },
+  { nama:'Sulawesi Selatan' },
+  { nama:'Sulawesi Tengah' },
+  { nama:'Sulawesi Tenggara' },
+  { nama:'Sulawesi Utara' },
+  { nama:'Sumatera Barat' },
+  { nama:'Sumatera Selatan' },
+  { nama:'Sumatera Utara' },
+];
+
+// ── 514 KABUPATEN/KOTA: kode wilayah resmi (Kemendagri), provinsi, dan nama kab/kota ──
+// Kode wilayah dicocokkan terhadap referensi resmi (basis Permendagri No.72/2019,
+// dengan pemutakhiran nama/kode utk pemekaran & penggantian nama kab/kota terbaru).
+const REGIONS = [
+  { kodeWilayah:'1172', provinsi:'Aceh', kabkota:'Kota Sabang' },
+  { kodeWilayah:'1101', provinsi:'Aceh', kabkota:'Kab. Simeulue' },
+  { kodeWilayah:'1116', provinsi:'Aceh', kabkota:'Kab. Aceh Jaya' },
+  { kodeWilayah:'1113', provinsi:'Aceh', kabkota:'Kab. Gayo Lues' },
+  { kodeWilayah:'1175', provinsi:'Aceh', kabkota:'Kota Subulussalam' },
+  { kodeWilayah:'1112', provinsi:'Aceh', kabkota:'Kab. Aceh Barat Daya' },
+  { kodeWilayah:'1102', provinsi:'Aceh', kabkota:'Kab. Aceh Singkil' },
+  { kodeWilayah:'1118', provinsi:'Aceh', kabkota:'Kab. Pidie Jaya' },
+  { kodeWilayah:'1115', provinsi:'Aceh', kabkota:'Kab. Nagan Raya' },
+  { kodeWilayah:'1173', provinsi:'Aceh', kabkota:'Kota Langsa' },
+  { kodeWilayah:'1117', provinsi:'Aceh', kabkota:'Kab. Bener Meriah' },
+  { kodeWilayah:'1107', provinsi:'Aceh', kabkota:'Kab. Aceh Barat' },
+  { kodeWilayah:'1174', provinsi:'Aceh', kabkota:'Kota Lhokseumawe' },
+  { kodeWilayah:'1103', provinsi:'Aceh', kabkota:'Kab. Aceh Selatan' },
+  { kodeWilayah:'1104', provinsi:'Aceh', kabkota:'Kab. Aceh Tenggara' },
+  { kodeWilayah:'1106', provinsi:'Aceh', kabkota:'Kab. Aceh Tengah' },
+  { kodeWilayah:'1171', provinsi:'Aceh', kabkota:'Kota Banda Aceh' },
+  { kodeWilayah:'1114', provinsi:'Aceh', kabkota:'Kab. Aceh Tamiang' },
+  { kodeWilayah:'1109', provinsi:'Aceh', kabkota:'Kab. Pidie' },
+  { kodeWilayah:'1108', provinsi:'Aceh', kabkota:'Kab. Aceh Besar' },
+  { kodeWilayah:'1110', provinsi:'Aceh', kabkota:'Kab. Bireuen' },
+  { kodeWilayah:'1105', provinsi:'Aceh', kabkota:'Kab. Aceh Timur' },
+  { kodeWilayah:'1111', provinsi:'Aceh', kabkota:'Kab. Aceh Utara' },
+  { kodeWilayah:'5105', provinsi:'Bali', kabkota:'Kab. Klungkung' },
+  { kodeWilayah:'5106', provinsi:'Bali', kabkota:'Kab. Bangli' },
+  { kodeWilayah:'5101', provinsi:'Bali', kabkota:'Kab. Jembrana' },
+  { kodeWilayah:'5102', provinsi:'Bali', kabkota:'Kab. Tabanan' },
+  { kodeWilayah:'5104', provinsi:'Bali', kabkota:'Kab. Gianyar' },
+  { kodeWilayah:'5103', provinsi:'Bali', kabkota:'Kab. Badung' },
+  { kodeWilayah:'5107', provinsi:'Bali', kabkota:'Kab. Karang Asem' },
+  { kodeWilayah:'5171', provinsi:'Bali', kabkota:'Kota Denpasar' },
+  { kodeWilayah:'5108', provinsi:'Bali', kabkota:'Kab. Buleleng' },
+  { kodeWilayah:'1906', provinsi:'Bangka Belitung', kabkota:'Kab. Belitung Timur' },
+  { kodeWilayah:'1902', provinsi:'Bangka Belitung', kabkota:'Kab. Belitung' },
+  { kodeWilayah:'1905', provinsi:'Bangka Belitung', kabkota:'Kab. Bangka Selatan' },
+  { kodeWilayah:'1904', provinsi:'Bangka Belitung', kabkota:'Kab. Bangka Tengah' },
+  { kodeWilayah:'1903', provinsi:'Bangka Belitung', kabkota:'Kab. Bangka Barat' },
+  { kodeWilayah:'1971', provinsi:'Bangka Belitung', kabkota:'Kota Pangkal Pinang' },
+  { kodeWilayah:'1901', provinsi:'Bangka Belitung', kabkota:'Kab. Bangka' },
+  { kodeWilayah:'3672', provinsi:'Banten', kabkota:'Kota Cilegon' },
+  { kodeWilayah:'3673', provinsi:'Banten', kabkota:'Kota Serang' },
+  { kodeWilayah:'3674', provinsi:'Banten', kabkota:'Kota Tangerang Selatan' },
+  { kodeWilayah:'3601', provinsi:'Banten', kabkota:'Kab. Pandeglang' },
+  { kodeWilayah:'3602', provinsi:'Banten', kabkota:'Kab. Lebak' },
+  { kodeWilayah:'3604', provinsi:'Banten', kabkota:'Kab. Serang' },
+  { kodeWilayah:'3671', provinsi:'Banten', kabkota:'Kota Tangerang' },
+  { kodeWilayah:'3603', provinsi:'Banten', kabkota:'Kab. Tangerang' },
+  { kodeWilayah:'1707', provinsi:'Bengkulu', kabkota:'Kab. Lebong' },
+  { kodeWilayah:'1709', provinsi:'Bengkulu', kabkota:'Kab. Bengkulu Tengah' },
+  { kodeWilayah:'1704', provinsi:'Bengkulu', kabkota:'Kab. Kaur' },
+  { kodeWilayah:'1708', provinsi:'Bengkulu', kabkota:'Kab. Kepahiang' },
+  { kodeWilayah:'1701', provinsi:'Bengkulu', kabkota:'Kab. Bengkulu Selatan' },
+  { kodeWilayah:'1705', provinsi:'Bengkulu', kabkota:'Kab. Seluma' },
+  { kodeWilayah:'1706', provinsi:'Bengkulu', kabkota:'Kab. Mukomuko' },
+  { kodeWilayah:'1702', provinsi:'Bengkulu', kabkota:'Kab. Rejang Lebong' },
+  { kodeWilayah:'1703', provinsi:'Bengkulu', kabkota:'Kab. Bengkulu Utara' },
+  { kodeWilayah:'1771', provinsi:'Bengkulu', kabkota:'Kota Bengkulu' },
+  { kodeWilayah:'3471', provinsi:'D I Yogyakarta', kabkota:'Kota Yogyakarta' },
+  { kodeWilayah:'3401', provinsi:'D I Yogyakarta', kabkota:'Kab. Kulon Progo' },
+  { kodeWilayah:'3403', provinsi:'D I Yogyakarta', kabkota:'Kab. Gunung Kidul' },
+  { kodeWilayah:'3402', provinsi:'D I Yogyakarta', kabkota:'Kab. Bantul' },
+  { kodeWilayah:'3404', provinsi:'D I Yogyakarta', kabkota:'Kab. Sleman' },
+  { kodeWilayah:'3101', provinsi:'DKJ Jakarta', kabkota:'Kab. Kepulauan Seribu' },
+  { kodeWilayah:'3173', provinsi:'DKJ Jakarta', kabkota:'Kota Jakarta Pusat' },
+  { kodeWilayah:'3172', provinsi:'DKJ Jakarta', kabkota:'Kota Jakarta Timur' },
+  { kodeWilayah:'3174', provinsi:'DKJ Jakarta', kabkota:'Kota Jakarta Barat' },
+  { kodeWilayah:'3175', provinsi:'DKJ Jakarta', kabkota:'Kota Jakarta Utara' },
+  { kodeWilayah:'3171', provinsi:'DKJ Jakarta', kabkota:'Kota Jakarta Selatan' },
+  { kodeWilayah:'7505', provinsi:'Gorontalo', kabkota:'Kab. Gorontalo Utara' },
+  { kodeWilayah:'7501', provinsi:'Gorontalo', kabkota:'Kab. Boalemo' },
+  { kodeWilayah:'7503', provinsi:'Gorontalo', kabkota:'Kab. Pohuwato' },
+  { kodeWilayah:'7504', provinsi:'Gorontalo', kabkota:'Kab. Bone Bolango' },
+  { kodeWilayah:'7571', provinsi:'Gorontalo', kabkota:'Kota Gorontalo' },
+  { kodeWilayah:'7502', provinsi:'Gorontalo', kabkota:'Kab. Gorontalo' },
+  { kodeWilayah:'1572', provinsi:'Jambi', kabkota:'Kota Sungai Penuh' },
+  { kodeWilayah:'1506', provinsi:'Jambi', kabkota:'Kab. Tanjung Jabung Timur' },
+  { kodeWilayah:'1501', provinsi:'Jambi', kabkota:'Kab. Kerinci' },
+  { kodeWilayah:'1504', provinsi:'Jambi', kabkota:'Kab. Batang Hari' },
+  { kodeWilayah:'1507', provinsi:'Jambi', kabkota:'Kab. Tanjung Jabung Barat' },
+  { kodeWilayah:'1503', provinsi:'Jambi', kabkota:'Kab. Sarolangun' },
+  { kodeWilayah:'1502', provinsi:'Jambi', kabkota:'Kab. Merangin' },
+  { kodeWilayah:'1508', provinsi:'Jambi', kabkota:'Kab. Tebo' },
+  { kodeWilayah:'1509', provinsi:'Jambi', kabkota:'Kab. Bungo' },
+  { kodeWilayah:'1505', provinsi:'Jambi', kabkota:'Kab. Muaro Jambi' },
+  { kodeWilayah:'1571', provinsi:'Jambi', kabkota:'Kota Jambi' },
+  { kodeWilayah:'3279', provinsi:'Jawa Barat', kabkota:'Kota Banjar' },
+  { kodeWilayah:'3274', provinsi:'Jawa Barat', kabkota:'Kota Cirebon' },
+  { kodeWilayah:'3218', provinsi:'Jawa Barat', kabkota:'Kab. Pangandaran' },
+  { kodeWilayah:'3272', provinsi:'Jawa Barat', kabkota:'Kota Sukabumi' },
+  { kodeWilayah:'3277', provinsi:'Jawa Barat', kabkota:'Kota Cimahi' },
+  { kodeWilayah:'3278', provinsi:'Jawa Barat', kabkota:'Kota Tasikmalaya' },
+  { kodeWilayah:'3271', provinsi:'Jawa Barat', kabkota:'Kota Bogor' },
+  { kodeWilayah:'3207', provinsi:'Jawa Barat', kabkota:'Kab. Ciamis' },
+  { kodeWilayah:'3211', provinsi:'Jawa Barat', kabkota:'Kab. Sumedang' },
+  { kodeWilayah:'3214', provinsi:'Jawa Barat', kabkota:'Kab. Purwakarta' },
+  { kodeWilayah:'3208', provinsi:'Jawa Barat', kabkota:'Kab. Kuningan' },
+  { kodeWilayah:'3210', provinsi:'Jawa Barat', kabkota:'Kab. Majalengka' },
+  { kodeWilayah:'3213', provinsi:'Jawa Barat', kabkota:'Kab. Subang' },
+  { kodeWilayah:'3212', provinsi:'Jawa Barat', kabkota:'Kab. Indramayu' },
+  { kodeWilayah:'3206', provinsi:'Jawa Barat', kabkota:'Kab. Tasikmalaya' },
+  { kodeWilayah:'3217', provinsi:'Jawa Barat', kabkota:'Kab. Bandung Barat' },
+  { kodeWilayah:'3276', provinsi:'Jawa Barat', kabkota:'Kota Depok' },
+  { kodeWilayah:'3273', provinsi:'Jawa Barat', kabkota:'Kota Bandung' },
+  { kodeWilayah:'3209', provinsi:'Jawa Barat', kabkota:'Kab. Cirebon' },
+  { kodeWilayah:'3275', provinsi:'Jawa Barat', kabkota:'Kota Bekasi' },
+  { kodeWilayah:'3215', provinsi:'Jawa Barat', kabkota:'Kab. Karawang' },
+  { kodeWilayah:'3203', provinsi:'Jawa Barat', kabkota:'Kab. Cianjur' },
+  { kodeWilayah:'3202', provinsi:'Jawa Barat', kabkota:'Kab. Sukabumi' },
+  { kodeWilayah:'3205', provinsi:'Jawa Barat', kabkota:'Kab. Garut' },
+  { kodeWilayah:'3216', provinsi:'Jawa Barat', kabkota:'Kab. Bekasi' },
+  { kodeWilayah:'3204', provinsi:'Jawa Barat', kabkota:'Kab. Bandung' },
+  { kodeWilayah:'3201', provinsi:'Jawa Barat', kabkota:'Kab. Bogor' },
+  { kodeWilayah:'3371', provinsi:'Jawa Tengah', kabkota:'Kota Magelang' },
+  { kodeWilayah:'3373', provinsi:'Jawa Tengah', kabkota:'Kota Salatiga' },
+  { kodeWilayah:'3376', provinsi:'Jawa Tengah', kabkota:'Kota Tegal' },
+  { kodeWilayah:'3375', provinsi:'Jawa Tengah', kabkota:'Kota Pekalongan' },
+  { kodeWilayah:'3372', provinsi:'Jawa Tengah', kabkota:'Kota Surakarta' },
+  { kodeWilayah:'3317', provinsi:'Jawa Tengah', kabkota:'Kab. Rembang' },
+  { kodeWilayah:'3306', provinsi:'Jawa Tengah', kabkota:'Kab. Purworejo' },
+  { kodeWilayah:'3316', provinsi:'Jawa Tengah', kabkota:'Kab. Blora' },
+  { kodeWilayah:'3323', provinsi:'Jawa Tengah', kabkota:'Kab. Temanggung' },
+  { kodeWilayah:'3312', provinsi:'Jawa Tengah', kabkota:'Kab. Wonogiri' },
+  { kodeWilayah:'3311', provinsi:'Jawa Tengah', kabkota:'Kab. Sukoharjo' },
+  { kodeWilayah:'3325', provinsi:'Jawa Tengah', kabkota:'Kab. Batang' },
+  { kodeWilayah:'3319', provinsi:'Jawa Tengah', kabkota:'Kab. Kudus' },
+  { kodeWilayah:'3307', provinsi:'Jawa Tengah', kabkota:'Kab. Wonosobo' },
+  { kodeWilayah:'3314', provinsi:'Jawa Tengah', kabkota:'Kab. Sragen' },
+  { kodeWilayah:'3313', provinsi:'Jawa Tengah', kabkota:'Kab. Karanganyar' },
+  { kodeWilayah:'3324', provinsi:'Jawa Tengah', kabkota:'Kab. Kendal' },
+  { kodeWilayah:'3322', provinsi:'Jawa Tengah', kabkota:'Kab. Semarang' },
+  { kodeWilayah:'3304', provinsi:'Jawa Tengah', kabkota:'Kab. Banjarnegara' },
+  { kodeWilayah:'3303', provinsi:'Jawa Tengah', kabkota:'Kab. Purbalingga' },
+  { kodeWilayah:'3309', provinsi:'Jawa Tengah', kabkota:'Kab. Boyolali' },
+  { kodeWilayah:'3326', provinsi:'Jawa Tengah', kabkota:'Kab. Pekalongan' },
+  { kodeWilayah:'3310', provinsi:'Jawa Tengah', kabkota:'Kab. Klaten' },
+  { kodeWilayah:'3320', provinsi:'Jawa Tengah', kabkota:'Kab. Jepara' },
+  { kodeWilayah:'3308', provinsi:'Jawa Tengah', kabkota:'Kab. Magelang' },
+  { kodeWilayah:'3318', provinsi:'Jawa Tengah', kabkota:'Kab. Pati' },
+  { kodeWilayah:'3321', provinsi:'Jawa Tengah', kabkota:'Kab. Demak' },
+  { kodeWilayah:'3305', provinsi:'Jawa Tengah', kabkota:'Kab. Kebumen' },
+  { kodeWilayah:'3315', provinsi:'Jawa Tengah', kabkota:'Kab. Grobogan' },
+  { kodeWilayah:'3327', provinsi:'Jawa Tengah', kabkota:'Kab. Pemalang' },
+  { kodeWilayah:'3374', provinsi:'Jawa Tengah', kabkota:'Kota Semarang' },
+  { kodeWilayah:'3302', provinsi:'Jawa Tengah', kabkota:'Kab. Banyumas' },
+  { kodeWilayah:'3328', provinsi:'Jawa Tengah', kabkota:'Kab. Tegal' },
+  { kodeWilayah:'3301', provinsi:'Jawa Tengah', kabkota:'Kab. Cilacap' },
+  { kodeWilayah:'3329', provinsi:'Jawa Tengah', kabkota:'Kab. Brebes' },
+  { kodeWilayah:'3576', provinsi:'Jawa Timur', kabkota:'Kota Mojokerto' },
+  { kodeWilayah:'3577', provinsi:'Jawa Timur', kabkota:'Kota Madiun' },
+  { kodeWilayah:'3579', provinsi:'Jawa Timur', kabkota:'Kota Batu' },
+  { kodeWilayah:'3575', provinsi:'Jawa Timur', kabkota:'Kota Pasuruan' },
+  { kodeWilayah:'3572', provinsi:'Jawa Timur', kabkota:'Kota Blitar' },
+  { kodeWilayah:'3574', provinsi:'Jawa Timur', kabkota:'Kota Probolinggo' },
+  { kodeWilayah:'3571', provinsi:'Jawa Timur', kabkota:'Kota Kediri' },
+  { kodeWilayah:'3501', provinsi:'Jawa Timur', kabkota:'Kab. Pacitan' },
+  { kodeWilayah:'3512', provinsi:'Jawa Timur', kabkota:'Kab. Situbondo' },
+  { kodeWilayah:'3520', provinsi:'Jawa Timur', kabkota:'Kab. Magetan' },
+  { kodeWilayah:'3503', provinsi:'Jawa Timur', kabkota:'Kab. Trenggalek' },
+  { kodeWilayah:'3519', provinsi:'Jawa Timur', kabkota:'Kab. Madiun' },
+  { kodeWilayah:'3511', provinsi:'Jawa Timur', kabkota:'Kab. Bondowoso' },
+  { kodeWilayah:'3573', provinsi:'Jawa Timur', kabkota:'Kota Malang' },
+  { kodeWilayah:'3521', provinsi:'Jawa Timur', kabkota:'Kab. Ngawi' },
+  { kodeWilayah:'3502', provinsi:'Jawa Timur', kabkota:'Kab. Ponorogo' },
+  { kodeWilayah:'3529', provinsi:'Jawa Timur', kabkota:'Kab. Sumenep' },
+  { kodeWilayah:'3528', provinsi:'Jawa Timur', kabkota:'Kab. Pamekasan' },
+  { kodeWilayah:'3504', provinsi:'Jawa Timur', kabkota:'Kab. Tulungagung' },
+  { kodeWilayah:'3526', provinsi:'Jawa Timur', kabkota:'Kab. Bangkalan' },
+  { kodeWilayah:'3508', provinsi:'Jawa Timur', kabkota:'Kab. Lumajang' },
+  { kodeWilayah:'3518', provinsi:'Jawa Timur', kabkota:'Kab. Nganjuk' },
+  { kodeWilayah:'3527', provinsi:'Jawa Timur', kabkota:'Kab. Sampang' },
+  { kodeWilayah:'3523', provinsi:'Jawa Timur', kabkota:'Kab. Tuban' },
+  { kodeWilayah:'3505', provinsi:'Jawa Timur', kabkota:'Kab. Blitar' },
+  { kodeWilayah:'3516', provinsi:'Jawa Timur', kabkota:'Kab. Mojokerto' },
+  { kodeWilayah:'3513', provinsi:'Jawa Timur', kabkota:'Kab. Probolinggo' },
+  { kodeWilayah:'3522', provinsi:'Jawa Timur', kabkota:'Kab. Bojonegoro' },
+  { kodeWilayah:'3524', provinsi:'Jawa Timur', kabkota:'Kab. Lamongan' },
+  { kodeWilayah:'3525', provinsi:'Jawa Timur', kabkota:'Kab. Gresik' },
+  { kodeWilayah:'3517', provinsi:'Jawa Timur', kabkota:'Kab. Jombang' },
+  { kodeWilayah:'3506', provinsi:'Jawa Timur', kabkota:'Kab. Kediri' },
+  { kodeWilayah:'3510', provinsi:'Jawa Timur', kabkota:'Kab. Banyuwangi' },
+  { kodeWilayah:'3514', provinsi:'Jawa Timur', kabkota:'Kab. Pasuruan' },
+  { kodeWilayah:'3515', provinsi:'Jawa Timur', kabkota:'Kab. Sidoarjo' },
+  { kodeWilayah:'3509', provinsi:'Jawa Timur', kabkota:'Kab. Jember' },
+  { kodeWilayah:'3507', provinsi:'Jawa Timur', kabkota:'Kab. Malang' },
+  { kodeWilayah:'3578', provinsi:'Jawa Timur', kabkota:'Kota Surabaya' },
+  { kodeWilayah:'6111', provinsi:'Kalimantan Barat', kabkota:'Kab. Kayong Utara' },
+  { kodeWilayah:'6110', provinsi:'Kalimantan Barat', kabkota:'Kab. Melawi' },
+  { kodeWilayah:'6109', provinsi:'Kalimantan Barat', kabkota:'Kab. Sekadau' },
+  { kodeWilayah:'6108', provinsi:'Kalimantan Barat', kabkota:'Kab. Kapuas Hulu' },
+  { kodeWilayah:'6172', provinsi:'Kalimantan Barat', kabkota:'Kota Singkawang' },
+  { kodeWilayah:'6102', provinsi:'Kalimantan Barat', kabkota:'Kab. Bengkayang' },
+  { kodeWilayah:'6104', provinsi:'Kalimantan Barat', kabkota:'Kab. Mempawah' },
+  { kodeWilayah:'6103', provinsi:'Kalimantan Barat', kabkota:'Kab. Landak' },
+  { kodeWilayah:'6107', provinsi:'Kalimantan Barat', kabkota:'Kab. Sintang' },
+  { kodeWilayah:'6105', provinsi:'Kalimantan Barat', kabkota:'Kab. Sanggau' },
+  { kodeWilayah:'6106', provinsi:'Kalimantan Barat', kabkota:'Kab. Ketapang' },
+  { kodeWilayah:'6101', provinsi:'Kalimantan Barat', kabkota:'Kab. Sambas' },
+  { kodeWilayah:'6112', provinsi:'Kalimantan Barat', kabkota:'Kab. Kubu Raya' },
+  { kodeWilayah:'6171', provinsi:'Kalimantan Barat', kabkota:'Kota Pontianak' },
+  { kodeWilayah:'6311', provinsi:'Kalimantan Selatan', kabkota:'Kab. Balangan' },
+  { kodeWilayah:'6305', provinsi:'Kalimantan Selatan', kabkota:'Kab. Tapin' },
+  { kodeWilayah:'6306', provinsi:'Kalimantan Selatan', kabkota:'Kab. Hulu Sungai Selatan' },
+  { kodeWilayah:'6308', provinsi:'Kalimantan Selatan', kabkota:'Kab. Hulu Sungai Utara' },
+  { kodeWilayah:'6307', provinsi:'Kalimantan Selatan', kabkota:'Kab. Hulu Sungai Tengah' },
+  { kodeWilayah:'6309', provinsi:'Kalimantan Selatan', kabkota:'Kab. Tabalong' },
+  { kodeWilayah:'6372', provinsi:'Kalimantan Selatan', kabkota:'Kota Banjar Baru' },
+  { kodeWilayah:'6304', provinsi:'Kalimantan Selatan', kabkota:'Kab. Barito Kuala' },
+  { kodeWilayah:'6302', provinsi:'Kalimantan Selatan', kabkota:'Kab. Kota Baru' },
+  { kodeWilayah:'6301', provinsi:'Kalimantan Selatan', kabkota:'Kab. Tanah Laut' },
+  { kodeWilayah:'6310', provinsi:'Kalimantan Selatan', kabkota:'Kab. Tanah Bumbu' },
+  { kodeWilayah:'6303', provinsi:'Kalimantan Selatan', kabkota:'Kab. Banjar' },
+  { kodeWilayah:'6371', provinsi:'Kalimantan Selatan', kabkota:'Kota Banjarmasin' },
+  { kodeWilayah:'6206', provinsi:'Kalimantan Tengah', kabkota:'Kab. Sukamara' },
+  { kodeWilayah:'6207', provinsi:'Kalimantan Tengah', kabkota:'Kab. Lamandau' },
+  { kodeWilayah:'6212', provinsi:'Kalimantan Tengah', kabkota:'Kab. Barito Timur' },
+  { kodeWilayah:'6213', provinsi:'Kalimantan Tengah', kabkota:'Kab. Murung Raya' },
+  { kodeWilayah:'6204', provinsi:'Kalimantan Tengah', kabkota:'Kab. Barito Selatan' },
+  { kodeWilayah:'6210', provinsi:'Kalimantan Tengah', kabkota:'Kab. Pulang Pisau' },
+  { kodeWilayah:'6211', provinsi:'Kalimantan Tengah', kabkota:'Kab. Gunung Mas' },
+  { kodeWilayah:'6205', provinsi:'Kalimantan Tengah', kabkota:'Kab. Barito Utara' },
+  { kodeWilayah:'6208', provinsi:'Kalimantan Tengah', kabkota:'Kab. Seruyan' },
+  { kodeWilayah:'6209', provinsi:'Kalimantan Tengah', kabkota:'Kab. Katingan' },
+  { kodeWilayah:'6201', provinsi:'Kalimantan Tengah', kabkota:'Kab. Kotawaringin Barat' },
+  { kodeWilayah:'6271', provinsi:'Kalimantan Tengah', kabkota:'Kota Palangka Raya' },
+  { kodeWilayah:'6203', provinsi:'Kalimantan Tengah', kabkota:'Kab. Kapuas' },
+  { kodeWilayah:'6202', provinsi:'Kalimantan Tengah', kabkota:'Kab. Kotawaringin Timur' },
+  { kodeWilayah:'6411', provinsi:'Kalimantan Timur', kabkota:'Kab. Mahakam Ulu' },
+  { kodeWilayah:'6402', provinsi:'Kalimantan Timur', kabkota:'Kab. Kutai Barat' },
+  { kodeWilayah:'6474', provinsi:'Kalimantan Timur', kabkota:'Kota Bontang' },
+  { kodeWilayah:'6405', provinsi:'Kalimantan Timur', kabkota:'Kab. Berau' },
+  { kodeWilayah:'6401', provinsi:'Kalimantan Timur', kabkota:'Kab. Paser' },
+  { kodeWilayah:'6409', provinsi:'Kalimantan Timur', kabkota:'Kab. Penajam Paser Utara' },
+  { kodeWilayah:'6404', provinsi:'Kalimantan Timur', kabkota:'Kab. Kutai Timur' },
+  { kodeWilayah:'6471', provinsi:'Kalimantan Timur', kabkota:'Kota Balikpapan' },
+  { kodeWilayah:'6472', provinsi:'Kalimantan Timur', kabkota:'Kota Samarinda' },
+  { kodeWilayah:'6403', provinsi:'Kalimantan Timur', kabkota:'Kab. Kutai Kartanegara' },
+  { kodeWilayah:'6503', provinsi:'Kalimantan Utara', kabkota:'Kab. Tana Tidung' },
+  { kodeWilayah:'6501', provinsi:'Kalimantan Utara', kabkota:'Kab. Malinau' },
+  { kodeWilayah:'6502', provinsi:'Kalimantan Utara', kabkota:'Kab. Bulungan' },
+  { kodeWilayah:'6504', provinsi:'Kalimantan Utara', kabkota:'Kab. Nunukan' },
+  { kodeWilayah:'6571', provinsi:'Kalimantan Utara', kabkota:'Kota Tarakan' },
+  { kodeWilayah:'2105', provinsi:'Kep. Riau', kabkota:'Kab. Kepulauan Anambas' },
+  { kodeWilayah:'2103', provinsi:'Kep. Riau', kabkota:'Kab. Natuna' },
+  { kodeWilayah:'2104', provinsi:'Kep. Riau', kabkota:'Kab. Lingga' },
+  { kodeWilayah:'2102', provinsi:'Kep. Riau', kabkota:'Kab. Bintan' },
+  { kodeWilayah:'2172', provinsi:'Kep. Riau', kabkota:'Kota Tanjung Pinang' },
+  { kodeWilayah:'2101', provinsi:'Kep. Riau', kabkota:'Kab. Karimun' },
+  { kodeWilayah:'2171', provinsi:'Kep. Riau', kabkota:'Kota Batam' },
+  { kodeWilayah:'1872', provinsi:'Lampung', kabkota:'Kota Metro' },
+  { kodeWilayah:'1813', provinsi:'Lampung', kabkota:'Kab. Pesisir Barat' },
+  { kodeWilayah:'1811', provinsi:'Lampung', kabkota:'Kab. Mesuji' },
+  { kodeWilayah:'1812', provinsi:'Lampung', kabkota:'Kab. Tulangbawang Barat' },
+  { kodeWilayah:'1801', provinsi:'Lampung', kabkota:'Kab. Lampung Barat' },
+  { kodeWilayah:'1810', provinsi:'Lampung', kabkota:'Kab. Pringsewu' },
+  { kodeWilayah:'1808', provinsi:'Lampung', kabkota:'Kab. Tulangbawang' },
+  { kodeWilayah:'1809', provinsi:'Lampung', kabkota:'Kab. Pesawaran' },
+  { kodeWilayah:'1807', provinsi:'Lampung', kabkota:'Kab. Way Kanan' },
+  { kodeWilayah:'1806', provinsi:'Lampung', kabkota:'Kab. Lampung Utara' },
+  { kodeWilayah:'1802', provinsi:'Lampung', kabkota:'Kab. Tanggamus' },
+  { kodeWilayah:'1804', provinsi:'Lampung', kabkota:'Kab. Lampung Timur' },
+  { kodeWilayah:'1871', provinsi:'Lampung', kabkota:'Kota Bandar Lampung' },
+  { kodeWilayah:'1803', provinsi:'Lampung', kabkota:'Kab. Lampung Selatan' },
+  { kodeWilayah:'1805', provinsi:'Lampung', kabkota:'Kab. Lampung Tengah' },
+  { kodeWilayah:'8172', provinsi:'Maluku', kabkota:'Kota Tual' },
+  { kodeWilayah:'8109', provinsi:'Maluku', kabkota:'Kab. Buru Selatan' },
+  { kodeWilayah:'8108', provinsi:'Maluku', kabkota:'Kab. Maluku Barat Daya' },
+  { kodeWilayah:'8107', provinsi:'Maluku', kabkota:'Kab. Seram Bagian Timur' },
+  { kodeWilayah:'8102', provinsi:'Maluku', kabkota:'Kab. Maluku Tenggara' },
+  { kodeWilayah:'8103', provinsi:'Maluku', kabkota:'Kab. Maluku Tengah' },
+  { kodeWilayah:'8104', provinsi:'Maluku', kabkota:'Kab. Buru' },
+  { kodeWilayah:'8105', provinsi:'Maluku', kabkota:'Kab. Kepulauan Aru' },
+  { kodeWilayah:'8106', provinsi:'Maluku', kabkota:'Kab. Seram Bagian Barat' },
+  { kodeWilayah:'8171', provinsi:'Maluku', kabkota:'Kota Ambon' },
+  { kodeWilayah:'8101', provinsi:'Maluku', kabkota:'Kab. Kepulauan Tanimbar' },
+  { kodeWilayah:'8208', provinsi:'Maluku Utara', kabkota:'Kab. Pulau Taliabu' },
+  { kodeWilayah:'8202', provinsi:'Maluku Utara', kabkota:'Kab. Halmahera Tengah' },
+  { kodeWilayah:'8207', provinsi:'Maluku Utara', kabkota:'Kab. Pulau Morotai' },
+  { kodeWilayah:'8206', provinsi:'Maluku Utara', kabkota:'Kab. Halmahera Timur' },
+  { kodeWilayah:'8203', provinsi:'Maluku Utara', kabkota:'Kab. Kepulauan Sula' },
+  { kodeWilayah:'8272', provinsi:'Maluku Utara', kabkota:'Kota Tidore Kepulauan' },
+  { kodeWilayah:'8201', provinsi:'Maluku Utara', kabkota:'Kab. Halmahera Barat' },
+  { kodeWilayah:'8205', provinsi:'Maluku Utara', kabkota:'Kab. Halmahera Utara' },
+  { kodeWilayah:'8271', provinsi:'Maluku Utara', kabkota:'Kota Ternate' },
+  { kodeWilayah:'8204', provinsi:'Maluku Utara', kabkota:'Kab. Halmahera Selatan' },
+  { kodeWilayah:'5207', provinsi:'Nusa Tenggara Barat', kabkota:'Kab. Sumbawa Barat' },
+  { kodeWilayah:'5272', provinsi:'Nusa Tenggara Barat', kabkota:'Kota Bima' },
+  { kodeWilayah:'5205', provinsi:'Nusa Tenggara Barat', kabkota:'Kab. Dompu' },
+  { kodeWilayah:'5208', provinsi:'Nusa Tenggara Barat', kabkota:'Kab. Lombok Utara' },
+  { kodeWilayah:'5271', provinsi:'Nusa Tenggara Barat', kabkota:'Kota Mataram' },
+  { kodeWilayah:'5204', provinsi:'Nusa Tenggara Barat', kabkota:'Kab. Sumbawa' },
+  { kodeWilayah:'5206', provinsi:'Nusa Tenggara Barat', kabkota:'Kab. Bima' },
+  { kodeWilayah:'5201', provinsi:'Nusa Tenggara Barat', kabkota:'Kab. Lombok Barat' },
+  { kodeWilayah:'5202', provinsi:'Nusa Tenggara Barat', kabkota:'Kab. Lombok Tengah' },
+  { kodeWilayah:'5203', provinsi:'Nusa Tenggara Barat', kabkota:'Kab. Lombok Timur' },
+  { kodeWilayah:'5316', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Sumba Tengah' },
+  { kodeWilayah:'5320', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Sabu Raijua' },
+  { kodeWilayah:'5312', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Ngada' },
+  { kodeWilayah:'5318', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Nagekeo' },
+  { kodeWilayah:'5308', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Lembata' },
+  { kodeWilayah:'5321', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Malaka' },
+  { kodeWilayah:'5314', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Rote Ndao' },
+  { kodeWilayah:'5301', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Sumba Barat' },
+  { kodeWilayah:'5306', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Belu' },
+  { kodeWilayah:'5311', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Ende' },
+  { kodeWilayah:'5307', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Alor' },
+  { kodeWilayah:'5305', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Timor Tengah Utara' },
+  { kodeWilayah:'5309', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Flores Timur' },
+  { kodeWilayah:'5303', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Kupang' },
+  { kodeWilayah:'5319', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Manggarai Timur' },
+  { kodeWilayah:'5302', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Sumba Timur' },
+  { kodeWilayah:'5315', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Manggarai Barat' },
+  { kodeWilayah:'5313', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Manggarai' },
+  { kodeWilayah:'5310', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Sikka' },
+  { kodeWilayah:'5304', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Timor Tengah Selatan' },
+  { kodeWilayah:'5317', provinsi:'Nusa Tenggara Timur', kabkota:'Kab. Sumba Barat Daya' },
+  { kodeWilayah:'5371', provinsi:'Nusa Tenggara Timur', kabkota:'Kota Kupang' },
+  { kodeWilayah:'9427', provinsi:'Papua', kabkota:'Kab. Supiori' },
+  { kodeWilayah:'9428', provinsi:'Papua', kabkota:'Kab. Mamberamo Raya' },
+  { kodeWilayah:'9426', provinsi:'Papua', kabkota:'Kab. Waropen' },
+  { kodeWilayah:'9419', provinsi:'Papua', kabkota:'Kab. Sarmi' },
+  { kodeWilayah:'9420', provinsi:'Papua', kabkota:'Kab. Keerom' },
+  { kodeWilayah:'9408', provinsi:'Papua', kabkota:'Kab. Kepulauan Yapen' },
+  { kodeWilayah:'9409', provinsi:'Papua', kabkota:'Kab. Biak Numfor' },
+  { kodeWilayah:'9403', provinsi:'Papua', kabkota:'Kab. Jayapura' },
+  { kodeWilayah:'9471', provinsi:'Papua', kabkota:'Kota Jayapura' },
+  { kodeWilayah:'9112', provinsi:'Papua Barat', kabkota:'Kab. Pegunungan Arfak' },
+  { kodeWilayah:'9111', provinsi:'Papua Barat', kabkota:'Kab. Manokwari Selatan' },
+  { kodeWilayah:'9103', provinsi:'Papua Barat', kabkota:'Kab. Teluk Wondama' },
+  { kodeWilayah:'9102', provinsi:'Papua Barat', kabkota:'Kab. Kaimana' },
+  { kodeWilayah:'9104', provinsi:'Papua Barat', kabkota:'Kab. Teluk Bintuni' },
+  { kodeWilayah:'9101', provinsi:'Papua Barat', kabkota:'Kab. Fak Fak' },
+  { kodeWilayah:'9105', provinsi:'Papua Barat', kabkota:'Kab. Manokwari' },
+  { kodeWilayah:'9109', provinsi:'Papua Barat Daya', kabkota:'Kab. Tambrauw' },
+  { kodeWilayah:'9110', provinsi:'Papua Barat Daya', kabkota:'Kab. Maybrat' },
+  { kodeWilayah:'9106', provinsi:'Papua Barat Daya', kabkota:'Kab. Sorong Selatan' },
+  { kodeWilayah:'9108', provinsi:'Papua Barat Daya', kabkota:'Kab. Raja Ampat' },
+  { kodeWilayah:'9107', provinsi:'Papua Barat Daya', kabkota:'Kab. Sorong' },
+  { kodeWilayah:'9171', provinsi:'Papua Barat Daya', kabkota:'Kota Sorong' },
+  { kodeWilayah:'9431', provinsi:'Papua Pegunungan', kabkota:'Kab. Mamberamo Tengah' },
+  { kodeWilayah:'9429', provinsi:'Papua Pegunungan', kabkota:'Kab. Nduga' },
+  { kodeWilayah:'9432', provinsi:'Papua Pegunungan', kabkota:'Kab. Yalimo' },
+  { kodeWilayah:'9417', provinsi:'Papua Pegunungan', kabkota:'Kab. Pegunungan Bintang' },
+  { kodeWilayah:'9418', provinsi:'Papua Pegunungan', kabkota:'Kab. Tolikara' },
+  { kodeWilayah:'9430', provinsi:'Papua Pegunungan', kabkota:'Kab. Lanny Jaya' },
+  { kodeWilayah:'9416', provinsi:'Papua Pegunungan', kabkota:'Kab. Yahukimo' },
+  { kodeWilayah:'9402', provinsi:'Papua Pegunungan', kabkota:'Kab. Jayawijaya' },
+  { kodeWilayah:'9413', provinsi:'Papua Selatan', kabkota:'Kab. Boven Digoel' },
+  { kodeWilayah:'9414', provinsi:'Papua Selatan', kabkota:'Kab. Mappi' },
+  { kodeWilayah:'9415', provinsi:'Papua Selatan', kabkota:'Kab. Asmat' },
+  { kodeWilayah:'9401', provinsi:'Papua Selatan', kabkota:'Kab. Merauke' },
+  { kodeWilayah:'9433', provinsi:'Papua Tengah', kabkota:'Kab. Puncak' },
+  { kodeWilayah:'9435', provinsi:'Papua Tengah', kabkota:'Kab. Intan Jaya' },
+  { kodeWilayah:'9411', provinsi:'Papua Tengah', kabkota:'Kab. Puncak Jaya' },
+  { kodeWilayah:'9436', provinsi:'Papua Tengah', kabkota:'Kab. Deiyai' },
+  { kodeWilayah:'9434', provinsi:'Papua Tengah', kabkota:'Kab. Dogiyai' },
+  { kodeWilayah:'9410', provinsi:'Papua Tengah', kabkota:'Kab. Paniai' },
+  { kodeWilayah:'9404', provinsi:'Papua Tengah', kabkota:'Kab. Nabire' },
+  { kodeWilayah:'9412', provinsi:'Papua Tengah', kabkota:'Kab. Mimika' },
+  { kodeWilayah:'1410', provinsi:'Riau', kabkota:'Kab. Kepulauan Meranti' },
+  { kodeWilayah:'1401', provinsi:'Riau', kabkota:'Kab. Kuantan Singingi' },
+  { kodeWilayah:'1473', provinsi:'Riau', kabkota:'Kota Dumai' },
+  { kodeWilayah:'1404', provinsi:'Riau', kabkota:'Kab. Pelalawan' },
+  { kodeWilayah:'1402', provinsi:'Riau', kabkota:'Kab. Indragiri Hulu' },
+  { kodeWilayah:'1405', provinsi:'Riau', kabkota:'Kab. Siak' },
+  { kodeWilayah:'1407', provinsi:'Riau', kabkota:'Kab. Rokan Hulu' },
+  { kodeWilayah:'1408', provinsi:'Riau', kabkota:'Kab. Bengkalis' },
+  { kodeWilayah:'1403', provinsi:'Riau', kabkota:'Kab. Indragiri Hilir' },
+  { kodeWilayah:'1409', provinsi:'Riau', kabkota:'Kab. Rokan Hilir' },
+  { kodeWilayah:'1406', provinsi:'Riau', kabkota:'Kab. Kampar' },
+  { kodeWilayah:'1471', provinsi:'Riau', kabkota:'Kota Pekanbaru' },
+  { kodeWilayah:'7606', provinsi:'Sulawesi Barat', kabkota:'Kab. Mamuju Tengah' },
+  { kodeWilayah:'7603', provinsi:'Sulawesi Barat', kabkota:'Kab. Mamasa' },
+  { kodeWilayah:'7605', provinsi:'Sulawesi Barat', kabkota:'Kab. Pasangkayu' },
+  { kodeWilayah:'7601', provinsi:'Sulawesi Barat', kabkota:'Kab. Majene' },
+  { kodeWilayah:'7604', provinsi:'Sulawesi Barat', kabkota:'Kab. Mamuju' },
+  { kodeWilayah:'7602', provinsi:'Sulawesi Barat', kabkota:'Kab. Polewali Mandar' },
+  { kodeWilayah:'7301', provinsi:'Sulawesi Selatan', kabkota:'Kab. Kepulauan Selayar' },
+  { kodeWilayah:'7372', provinsi:'Sulawesi Selatan', kabkota:'Kota Pare-Pare' },
+  { kodeWilayah:'7310', provinsi:'Sulawesi Selatan', kabkota:'Kab. Barru' },
+  { kodeWilayah:'7303', provinsi:'Sulawesi Selatan', kabkota:'Kab. Bantaeng' },
+  { kodeWilayah:'7312', provinsi:'Sulawesi Selatan', kabkota:'Kab. Soppeng' },
+  { kodeWilayah:'7373', provinsi:'Sulawesi Selatan', kabkota:'Kota Palopo' },
+  { kodeWilayah:'7316', provinsi:'Sulawesi Selatan', kabkota:'Kab. Enrekang' },
+  { kodeWilayah:'7318', provinsi:'Sulawesi Selatan', kabkota:'Kab. Tana Toraja' },
+  { kodeWilayah:'7307', provinsi:'Sulawesi Selatan', kabkota:'Kab. Sinjai' },
+  { kodeWilayah:'7326', provinsi:'Sulawesi Selatan', kabkota:'Kab. Toraja Utara' },
+  { kodeWilayah:'7314', provinsi:'Sulawesi Selatan', kabkota:'Kab. Sidenreng Rappang' },
+  { kodeWilayah:'7322', provinsi:'Sulawesi Selatan', kabkota:'Kab. Luwu Utara' },
+  { kodeWilayah:'7305', provinsi:'Sulawesi Selatan', kabkota:'Kab. Takalar' },
+  { kodeWilayah:'7313', provinsi:'Sulawesi Selatan', kabkota:'Kab. Wajo' },
+  { kodeWilayah:'7325', provinsi:'Sulawesi Selatan', kabkota:'Kab. Luwu Timur' },
+  { kodeWilayah:'7309', provinsi:'Sulawesi Selatan', kabkota:'Kab. Pangkajene dan Kepulauan' },
+  { kodeWilayah:'7317', provinsi:'Sulawesi Selatan', kabkota:'Kab. Luwu' },
+  { kodeWilayah:'7304', provinsi:'Sulawesi Selatan', kabkota:'Kab. Jeneponto' },
+  { kodeWilayah:'7302', provinsi:'Sulawesi Selatan', kabkota:'Kab. Bulukumba' },
+  { kodeWilayah:'7315', provinsi:'Sulawesi Selatan', kabkota:'Kab. Pinrang' },
+  { kodeWilayah:'7308', provinsi:'Sulawesi Selatan', kabkota:'Kab. Maros' },
+  { kodeWilayah:'7311', provinsi:'Sulawesi Selatan', kabkota:'Kab. Bone' },
+  { kodeWilayah:'7306', provinsi:'Sulawesi Selatan', kabkota:'Kab. Gowa' },
+  { kodeWilayah:'7371', provinsi:'Sulawesi Selatan', kabkota:'Kota Makassar' },
+  { kodeWilayah:'7211', provinsi:'Sulawesi Tengah', kabkota:'Kab. Banggai Laut' },
+  { kodeWilayah:'7201', provinsi:'Sulawesi Tengah', kabkota:'Kab. Banggai Kepulauan' },
+  { kodeWilayah:'7212', provinsi:'Sulawesi Tengah', kabkota:'Kab. Morowali Utara' },
+  { kodeWilayah:'7207', provinsi:'Sulawesi Tengah', kabkota:'Kab. Buol' },
+  { kodeWilayah:'7209', provinsi:'Sulawesi Tengah', kabkota:'Kab. Tojo Una-Una' },
+  { kodeWilayah:'7203', provinsi:'Sulawesi Tengah', kabkota:'Kab. Morowali' },
+  { kodeWilayah:'7204', provinsi:'Sulawesi Tengah', kabkota:'Kab. Poso' },
+  { kodeWilayah:'7206', provinsi:'Sulawesi Tengah', kabkota:'Kab. Toli-Toli' },
+  { kodeWilayah:'7210', provinsi:'Sulawesi Tengah', kabkota:'Kab. Sigi' },
+  { kodeWilayah:'7205', provinsi:'Sulawesi Tengah', kabkota:'Kab. Donggala' },
+  { kodeWilayah:'7202', provinsi:'Sulawesi Tengah', kabkota:'Kab. Banggai' },
+  { kodeWilayah:'7208', provinsi:'Sulawesi Tengah', kabkota:'Kab. Parigi Moutong' },
+  { kodeWilayah:'7271', provinsi:'Sulawesi Tengah', kabkota:'Kota Palu' },
+  { kodeWilayah:'7412', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Konawe Kepulauan' },
+  { kodeWilayah:'7410', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Konawe Utara' },
+  { kodeWilayah:'7409', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Buton Utara' },
+  { kodeWilayah:'7413', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Muna Barat' },
+  { kodeWilayah:'7415', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Buton Selatan' },
+  { kodeWilayah:'7407', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Wakatobi' },
+  { kodeWilayah:'7411', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Kolaka Timur' },
+  { kodeWilayah:'7414', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Buton Tengah' },
+  { kodeWilayah:'7401', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Buton' },
+  { kodeWilayah:'7408', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Kolaka Utara' },
+  { kodeWilayah:'7406', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Bombana' },
+  { kodeWilayah:'7472', provinsi:'Sulawesi Tenggara', kabkota:'Kota Bau-Bau' },
+  { kodeWilayah:'7402', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Muna' },
+  { kodeWilayah:'7404', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Kolaka' },
+  { kodeWilayah:'7403', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Konawe' },
+  { kodeWilayah:'7405', provinsi:'Sulawesi Tenggara', kabkota:'Kab. Konawe Selatan' },
+  { kodeWilayah:'7471', provinsi:'Sulawesi Tenggara', kabkota:'Kota Kendari' },
+  { kodeWilayah:'7108', provinsi:'Sulawesi Utara', kabkota:'Kab. Siau Tagulandang Biaro' },
+  { kodeWilayah:'7110', provinsi:'Sulawesi Utara', kabkota:'Kab. Bolaang Mongondow Selatan' },
+  { kodeWilayah:'7111', provinsi:'Sulawesi Utara', kabkota:'Kab. Bolaang Mongondow Timur' },
+  { kodeWilayah:'7104', provinsi:'Sulawesi Utara', kabkota:'Kab. Kepulauan Talaud' },
+  { kodeWilayah:'7107', provinsi:'Sulawesi Utara', kabkota:'Kab. Bolaang Mongondow Utara' },
+  { kodeWilayah:'7173', provinsi:'Sulawesi Utara', kabkota:'Kota Tomohon' },
+  { kodeWilayah:'7103', provinsi:'Sulawesi Utara', kabkota:'Kab. Kepulauan Sangihe' },
+  { kodeWilayah:'7109', provinsi:'Sulawesi Utara', kabkota:'Kab. Minahasa Tenggara' },
+  { kodeWilayah:'7174', provinsi:'Sulawesi Utara', kabkota:'Kota Kotamobagu' },
+  { kodeWilayah:'7105', provinsi:'Sulawesi Utara', kabkota:'Kab. Minahasa Selatan' },
+  { kodeWilayah:'7106', provinsi:'Sulawesi Utara', kabkota:'Kab. Minahasa Utara' },
+  { kodeWilayah:'7172', provinsi:'Sulawesi Utara', kabkota:'Kota Bitung' },
+  { kodeWilayah:'7101', provinsi:'Sulawesi Utara', kabkota:'Kab. Bolaang Mongondow' },
+  { kodeWilayah:'7102', provinsi:'Sulawesi Utara', kabkota:'Kab. Minahasa' },
+  { kodeWilayah:'7171', provinsi:'Sulawesi Utara', kabkota:'Kota Manado' },
+  { kodeWilayah:'1374', provinsi:'Sumatera Barat', kabkota:'Kota Padang Panjang' },
+  { kodeWilayah:'1373', provinsi:'Sumatera Barat', kabkota:'Kota Sawah Lunto' },
+  { kodeWilayah:'1372', provinsi:'Sumatera Barat', kabkota:'Kota Solok' },
+  { kodeWilayah:'1301', provinsi:'Sumatera Barat', kabkota:'Kab. Kepulauan Mentawai' },
+  { kodeWilayah:'1377', provinsi:'Sumatera Barat', kabkota:'Kota Pariaman' },
+  { kodeWilayah:'1375', provinsi:'Sumatera Barat', kabkota:'Kota Bukittinggi' },
+  { kodeWilayah:'1376', provinsi:'Sumatera Barat', kabkota:'Kota Payakumbuh' },
+  { kodeWilayah:'1310', provinsi:'Sumatera Barat', kabkota:'Kab. Solok Selatan' },
+  { kodeWilayah:'1304', provinsi:'Sumatera Barat', kabkota:'Kab. Sijunjung' },
+  { kodeWilayah:'1311', provinsi:'Sumatera Barat', kabkota:'Kab. Dharmas Raya' },
+  { kodeWilayah:'1309', provinsi:'Sumatera Barat', kabkota:'Kab. Pasaman' },
+  { kodeWilayah:'1305', provinsi:'Sumatera Barat', kabkota:'Kab. Tanah Datar' },
+  { kodeWilayah:'1308', provinsi:'Sumatera Barat', kabkota:'Kab. Lima Puluh Kota' },
+  { kodeWilayah:'1303', provinsi:'Sumatera Barat', kabkota:'Kab. Solok' },
+  { kodeWilayah:'1306', provinsi:'Sumatera Barat', kabkota:'Kab. Padang Pariaman' },
+  { kodeWilayah:'1307', provinsi:'Sumatera Barat', kabkota:'Kab. Agam' },
+  { kodeWilayah:'1312', provinsi:'Sumatera Barat', kabkota:'Kab. Pasaman Barat' },
+  { kodeWilayah:'1302', provinsi:'Sumatera Barat', kabkota:'Kab. Pesisir Selatan' },
+  { kodeWilayah:'1371', provinsi:'Sumatera Barat', kabkota:'Kota Padang' },
+  { kodeWilayah:'1673', provinsi:'Sumatera Selatan', kabkota:'Kota Pagar Alam' },
+  { kodeWilayah:'1613', provinsi:'Sumatera Selatan', kabkota:'Kab. Musi Rawas Utara' },
+  { kodeWilayah:'1672', provinsi:'Sumatera Selatan', kabkota:'Kota Prabumulih' },
+  { kodeWilayah:'1612', provinsi:'Sumatera Selatan', kabkota:'Kab. Penukal Abab Lematang Ilir' },
+  { kodeWilayah:'1611', provinsi:'Sumatera Selatan', kabkota:'Kab. Empat Lawang' },
+  { kodeWilayah:'1674', provinsi:'Sumatera Selatan', kabkota:'Kota Lubuklinggau' },
+  { kodeWilayah:'1608', provinsi:'Sumatera Selatan', kabkota:'Kab. Ogan Komering Ulu Selatan' },
+  { kodeWilayah:'1601', provinsi:'Sumatera Selatan', kabkota:'Kab. Ogan Komering Ulu' },
+  { kodeWilayah:'1605', provinsi:'Sumatera Selatan', kabkota:'Kab. Musi Rawas' },
+  { kodeWilayah:'1604', provinsi:'Sumatera Selatan', kabkota:'Kab. Lahat' },
+  { kodeWilayah:'1610', provinsi:'Sumatera Selatan', kabkota:'Kab. Ogan Ilir' },
+  { kodeWilayah:'1609', provinsi:'Sumatera Selatan', kabkota:'Kab. Ogan Komering Ulu Timur' },
+  { kodeWilayah:'1603', provinsi:'Sumatera Selatan', kabkota:'Kab. Muara Enim' },
+  { kodeWilayah:'1606', provinsi:'Sumatera Selatan', kabkota:'Kab. Musi Banyuasin' },
+  { kodeWilayah:'1602', provinsi:'Sumatera Selatan', kabkota:'Kab. Ogan Komering Ilir' },
+  { kodeWilayah:'1607', provinsi:'Sumatera Selatan', kabkota:'Kab. Banyu Asin' },
+  { kodeWilayah:'1671', provinsi:'Sumatera Selatan', kabkota:'Kota Palembang' },
+  { kodeWilayah:'1271', provinsi:'Sumatera Utara', kabkota:'Kota Sibolga' },
+  { kodeWilayah:'1225', provinsi:'Sumatera Utara', kabkota:'Kab. Nias Barat' },
+  { kodeWilayah:'1216', provinsi:'Sumatera Utara', kabkota:'Kab. Pakpak Bharat' },
+  { kodeWilayah:'1201', provinsi:'Sumatera Utara', kabkota:'Kab. Nias' },
+  { kodeWilayah:'1224', provinsi:'Sumatera Utara', kabkota:'Kab. Nias Utara' },
+  { kodeWilayah:'1217', provinsi:'Sumatera Utara', kabkota:'Kab. Samosir' },
+  { kodeWilayah:'1278', provinsi:'Sumatera Utara', kabkota:'Kota Gunungsitoli' },
+  { kodeWilayah:'1274', provinsi:'Sumatera Utara', kabkota:'Kota Tebing Tinggi' },
+  { kodeWilayah:'1272', provinsi:'Sumatera Utara', kabkota:'Kota Tanjung Balai' },
+  { kodeWilayah:'1215', provinsi:'Sumatera Utara', kabkota:'Kab. Humbang Hasundutan' },
+  { kodeWilayah:'1206', provinsi:'Sumatera Utara', kabkota:'Kab. Toba' },
+  { kodeWilayah:'1277', provinsi:'Sumatera Utara', kabkota:'Kota Padangsidimpuan' },
+  { kodeWilayah:'1273', provinsi:'Sumatera Utara', kabkota:'Kota Pematang Siantar' },
+  { kodeWilayah:'1220', provinsi:'Sumatera Utara', kabkota:'Kab. Padang Lawas Utara' },
+  { kodeWilayah:'1276', provinsi:'Sumatera Utara', kabkota:'Kota Binjai' },
+  { kodeWilayah:'1221', provinsi:'Sumatera Utara', kabkota:'Kab. Padang Lawas' },
+  { kodeWilayah:'1210', provinsi:'Sumatera Utara', kabkota:'Kab. Dairi' },
+  { kodeWilayah:'1203', provinsi:'Sumatera Utara', kabkota:'Kab. Tapanuli Selatan' },
+  { kodeWilayah:'1205', provinsi:'Sumatera Utara', kabkota:'Kab. Tapanuli Utara' },
+  { kodeWilayah:'1214', provinsi:'Sumatera Utara', kabkota:'Kab. Nias Selatan' },
+  { kodeWilayah:'1204', provinsi:'Sumatera Utara', kabkota:'Kab. Tapanuli Tengah' },
+  { kodeWilayah:'1222', provinsi:'Sumatera Utara', kabkota:'Kab. Labuhan Batu Selatan' },
+  { kodeWilayah:'1211', provinsi:'Sumatera Utara', kabkota:'Kab. Karo' },
+  { kodeWilayah:'1223', provinsi:'Sumatera Utara', kabkota:'Kab. Labuhan Batu Utara' },
+  { kodeWilayah:'1219', provinsi:'Sumatera Utara', kabkota:'Kab. Batu Bara' },
+  { kodeWilayah:'1207', provinsi:'Sumatera Utara', kabkota:'Kab. Labuhan Batu' },
+  { kodeWilayah:'1202', provinsi:'Sumatera Utara', kabkota:'Kab. Mandailing Natal' },
+  { kodeWilayah:'1218', provinsi:'Sumatera Utara', kabkota:'Kab. Serdang Bedagai' },
+  { kodeWilayah:'1208', provinsi:'Sumatera Utara', kabkota:'Kab. Asahan' },
+  { kodeWilayah:'1209', provinsi:'Sumatera Utara', kabkota:'Kab. Simalungun' },
+  { kodeWilayah:'1213', provinsi:'Sumatera Utara', kabkota:'Kab. Langkat' },
+  { kodeWilayah:'1212', provinsi:'Sumatera Utara', kabkota:'Kab. Deli Serdang' },
+  { kodeWilayah:'1275', provinsi:'Sumatera Utara', kabkota:'Kota Medan' },
+];
+
+// ── Deterministic seeded RNG (mulberry32) berdasarkan string ──
+function hashStr(str){
+  let h=1779033703 ^ str.length;
+  for(let i=0;i<str.length;i++){
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return ()=>{
+    h = Math.imul(h ^ (h >>> 16), 2246822519);
+    h = Math.imul(h ^ (h >>> 13), 3266489917);
+    h = (h ^= h >>> 16) >>> 0;
+    return h;
+  };
+}
+function seededRandom(seedStr){
+  const seedFn = hashStr(seedStr);
+  let a = seedFn();
+  return function(){
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// ── Generate capaian per (wilayah × penyakit), deterministik ──
+// SCREENING_DATA[diseaseKey] = array paralel dengan REGIONS: {capaian, gap, status}
+const SCREENING_DATA = {};
+DISEASES.forEach(dz=>{
+  SCREENING_DATA[dz.key] = REGIONS.map((r,idx)=>{
+    const rnd = seededRandom(dz.key+'|'+r.kodeWilayah);
+    // Bias: sebagian besar wilayah masih di bawah target (realistis utk indikator PTM)
+    const factor = 0.12 + rnd()*1.05; // 0.12x - 1.17x dari target
+    let capaian = Math.min(100, Math.max(1, dz.target * factor));
+    capaian = Math.round(capaian*10)/10;
+    const gap = capaian>=dz.target ? 0 : Math.round(((dz.target-capaian)/dz.target*100)*10)/10;
+    const status = gap>50 ? 'merah' : gap>=20 ? 'kuning' : 'hijau';
+    return { capaian, gap, status };
+  });
+});
+
+// ── FAKTOR PERTUMBUHAN PER TRIWULAN (ilustratif, untuk simulasi tren kuartalan) ──
+// Q2-2026 dianggap baseline (1.0). Silakan sambungkan ke data riil per triwulan.
+const PERIOD_FACTORS = { 'Q1-2026':0.86, 'Q2-2026':1.0, 'Q3-2026':1.08, 'Q4-2026':1.16 };
+
+// ── State ──
+let currentDisease = 'skrining_hipertensi';
+let searchQuery = '';
+let activeStatusFilter = 'all';
+let currentPeriod = 'Q2-2026';
+
+// ── Data hasil Impor Massal per (IKK × kode wilayah × periode).
+//    Tersimpan di memori browser saja (non-persisten, hilang saat reload).
+//    Key: `${diseaseKey}|${kodeWilayah}|${periode}` → { capaian, numerator, denominator } ──
+const IMPORTED_DATA = {};
+const IMPORT_LOG = {}; // diseaseKey -> { ts, matched, total, url }
+function overrideKey(diseaseKey, kodeWilayah, periode){ return diseaseKey+'|'+kodeWilayah+'|'+periode; }
+let REGION_INDEX_BY_KODE = null;
+function regionIndexByKode(){
+  if(!REGION_INDEX_BY_KODE){
+    REGION_INDEX_BY_KODE = {};
+    REGIONS.forEach((r,idx)=>{ REGION_INDEX_BY_KODE[r.kodeWilayah]=idx; });
+  }
+  return REGION_INDEX_BY_KODE;
+}
+let pendingImportRows = null; // hasil parse+match sementara, menunggu tombol "Terapkan"
+
+// ── Ambil data capaian/gap suatu wilayah untuk jenis skrining tertentu,
+//    disesuaikan dengan faktor triwulan yang sedang dipilih ──
+function getCellData(diseaseKey, idx){
+  const dz = DISEASE_MAP[diseaseKey];
+  const region = REGIONS[idx];
+  const ovKey = overrideKey(diseaseKey, region.kodeWilayah, currentPeriod);
+  const imported = IMPORTED_DATA[ovKey];
+  if(imported){
+    const capaian = imported.capaian;
+    // Gap/status selalu dibandingkan terhadap target nasional IKK (dz.target) —
+    // ini "target kinerja" (persen, patokan kebijakan), berbeda dari "sasaran" (denominator,
+    // jumlah orang) yang besarnya memang wajar berbeda tiap kab/kota.
+    const gap = capaian>=dz.target ? 0 : Math.round(((dz.target-capaian)/dz.target*100)*10)/10;
+    const status = gap>50 ? 'merah' : gap>=20 ? 'kuning' : 'hijau';
+    return { capaian, gap, status, sasaran:imported.denominator, tercapai:imported.numerator, imported:true };
+  }
+  const base = SCREENING_DATA[diseaseKey][idx];
+  const factor = PERIOD_FACTORS[currentPeriod] ?? 1;
+  const capaian = Math.min(100, Math.round(base.capaian*factor*10)/10);
+  const gap = capaian>=dz.target ? 0 : Math.round(((dz.target-capaian)/dz.target*100)*10)/10;
+  const status = gap>50 ? 'merah' : gap>=20 ? 'kuning' : 'hijau';
+  return { capaian, gap, status, sasaran:null, tercapai:null, imported:false };
+}
+// ── Hitung array {capaian,gap,status} untuk seluruh 514 wilayah pada satu jenis skrining ──
+function computeDiseaseStats(diseaseKey){
+  return REGIONS.map((_,idx)=>getCellData(diseaseKey, idx));
+}
+// ── Hitung agregat (rata-rata) capaian suatu provinsi, untuk satu jenis skrining
+//    atau '__avg__' untuk rata-rata seluruh 10 jenis skrining sekaligus ──
+function computeProvinceAggregate(provName, diseaseSel){
+  const idxs = [];
+  REGIONS.forEach((r,idx)=>{ if(r.provinsi===provName) idxs.push(idx); });
+  let n=0;
+  if(diseaseSel==='__avg__'){
+    // Target nasional tiap IKK berbeda-beda dan TIDAK boleh dijumlah/dirata-rata lintas indikator.
+    // Maka mode gabungan ini memakai rasio "% dari target" per indikator, lalu dirata-rata —
+    // sehingga target acuannya konsisten 100 (persen dari target), bukan angka target yang diakumulasi.
+    let ratioSum=0, gapSum=0;
+    DISEASES.forEach(dz=>{
+      idxs.forEach(idx=>{
+        const d = getCellData(dz.key, idx);
+        ratioSum += Math.min(100, (d.capaian/dz.target)*100);
+        gapSum += d.gap;
+        n++;
+      });
+    });
+    const avgCapaian = n? ratioSum/n : 0;
+    const avgGap = n? gapSum/n : 0;
+    const status = avgGap>50?'merah':avgGap>=20?'kuning':'hijau';
+    return { avgCapaian, avgTarget:100, avgGap, status, jumlahWilayah: idxs.length };
+  } else {
+    const dz = DISEASE_MAP[diseaseSel];
+    let capSum=0, gapSum=0;
+    idxs.forEach(idx=>{
+      const d = getCellData(diseaseSel, idx);
+      capSum+=d.capaian; gapSum+=d.gap; n++;
+    });
+    const avgCapaian = n? capSum/n : 0;
+    const avgGap = n? gapSum/n : 0;
+    const status = avgGap>50?'merah':avgGap>=20?'kuning':'hijau';
+    return { avgCapaian, avgTarget:dz.target, avgGap, status, jumlahWilayah: idxs.length };
+  }
+}
+
+// ── Populate sidebar disease nav, dikelompokkan per ISS > IKP ──
+function renderDiseaseNav(){
+  const el = document.getElementById('disease-nav-list');
+  el.innerHTML = ISS_LIST.map(iss=>{
+    const ikpGroup = ikpByIss(iss.code).map(ikp=>{
+      const items = ikkByIkp(ikp.code).map(dz=>`
+        <button class="nav-item" data-disease="${dz.key}" onclick="selectDisease('${dz.key}')" style="padding-left:20px">
+          <span class="nav-emoji">${dz.emoji}</span>${dz.label}
+        </button>`).join('');
+      return `<div style="font-size:9.5px;color:rgba(255,255,255,.32);padding:7px 10px 2px;font-weight:600">${ikp.code}</div>${items}`;
+    }).join('');
+    return `<div style="font-size:10px;color:rgba(255,255,255,.5);padding:9px 8px 2px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">${iss.code}</div>${ikpGroup}`;
+  }).join('');
+}
+
+// ── Populate disease <select> (toolbar, tren, drill-down) dengan optgroup per IKP ──
+function buildGroupedOptions(){
+  return IKP_LIST.map(ikp=>{
+    const opts = ikkByIkp(ikp.code).map(dz=>`<option value="${dz.key}">${dz.emoji} ${dz.label}</option>`).join('');
+    return `<optgroup label="${ikp.code} — ${ikp.name}">${opts}</optgroup>`;
+  }).join('');
+}
+function renderDiseaseSelects(){
+  const grouped = buildGroupedOptions();
+  document.getElementById('disease-select').innerHTML = grouped;
+  document.getElementById('disease-select').value = currentDisease;
+}
+
+function selectDisease(key){
+  currentDisease = key;
+  navigate('skrining');
+  document.getElementById('disease-select').value = key;
+  updateDiseaseNavActive();
+  renderRepositori();
+}
+function onDiseaseSelectChange(){
+  currentDisease = document.getElementById('disease-select').value;
+  updateDiseaseNavActive();
+  renderRepositori();
+}
+function updateDiseaseNavActive(){
+  document.querySelectorAll('#disease-nav-list .nav-item').forEach(b=>{
+    b.classList.toggle('active', b.dataset.disease===currentDisease);
+  });
+}
+
+// ── Navigation between pages ──
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(page).classList.add('active');
+  document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
+  if(page==='skrining'){
+    document.querySelectorAll('#disease-nav-list .nav-item').forEach(b=>b.classList.remove('active'));
+  } else {
+    document.querySelectorAll('#disease-nav-list .nav-item').forEach(b=>b.classList.remove('active'));
+  }
+  const titles = { beranda:['Beranda','Sistem Informasi Kinerja Cascading — IT, ISS, IKP & IKK P2PTM'],
+                   cascading:['Peta Cascading Interaktif','Telusuri hierarki IT → ISS → IKP → IKK beserta capaian nasionalnya'],
+                   skrining:['Tabel Indikator IKK', 'Kode Wilayah · Provinsi · Kab/Kota · Target · Capaian · Gap %'],
+                   drilldown:['Drill-Down Wilayah', 'Nasional (38 Provinsi) → Kabupaten/Kota (514)'],
+                   import:['Impor Data Massal', 'Isi capaian 514 kab/kota sekaligus per indikator, lewat Google Sheets'] };
+  document.getElementById('topbar-title').textContent = titles[page][0];
+  document.getElementById('topbar-sub').textContent = titles[page][1];
+  if(page==='drilldown'){ renderDrilldown(); }
+  if(page==='cascading'){ renderCascading(); }
+}
+
+// ── Filter helper ──
+function getFilteredRows(){
+  const dz = DISEASE_MAP[currentDisease];
+  const q = searchQuery.trim().toLowerCase();
+  const rows = [];
+  REGIONS.forEach((r,idx)=>{
+    if(q && !(r.kodeWilayah.toLowerCase().includes(q) || r.provinsi.toLowerCase().includes(q) || r.kabkota.toLowerCase().includes(q))) return;
+    const d = getCellData(currentDisease, idx);
+    if(activeStatusFilter!=='all' && d.status!==activeStatusFilter) return;
+    rows.push({ ...r, capaian:d.capaian, gap:d.gap, status:d.status, sasaran:d.sasaran, tercapai:d.tercapai, imported:d.imported });
+  });
+  return rows;
+}
+
+function gapClass(status){
+  return status==='merah' ? 'gap-red' : status==='kuning' ? 'gap-yellow' : 'gap-green';
+}
+
+// ── Render tabel utama (Skrining Penyakit) ──
+function renderRepositori(){
+  const dz = DISEASE_MAP[currentDisease];
+  const rows = getFilteredRows();
+  const tbody = document.getElementById('repo-tbody');
+  if(rows.length===0){
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Tidak ada data yang cocok dengan pencarian/filter.</p></div></td></tr>`;
+  } else {
+    tbody.innerHTML = rows.map((r,i)=>`
+      <tr>
+        <td class="rownum">${i+1}</td>
+        <td class="kode-wilayah">${r.kodeWilayah}</td>
+        <td class="prov-cell">${r.provinsi}</td>
+        <td class="kab-cell">${r.kabkota}</td>
+        <td class="num">${r.sasaran!=null ? r.sasaran.toLocaleString('id-ID') : '<span title="Belum ada data sasaran wilayah ini dari impor" style="color:var(--gray-text);cursor:help">— ﹡</span>'}</td>
+        <td class="num">${r.tercapai!=null ? r.tercapai.toLocaleString('id-ID') : '<span title="Belum ada data capaian wilayah ini dari impor" style="color:var(--gray-text);cursor:help">— ﹡</span>'}${r.imported?' <span title="Data hasil impor Google Sheets" style="color:var(--teal)">📥</span>':''}</td>
+        <td class="center"><span class="gap-cell ${gapClass(r.status)}">${r.capaian.toFixed(1)}%</span></td>
+      </tr>`).join('');
+  }
+  const targetTxt = dz.targetLabel ? dz.targetLabel : dz.target+'%';
+  document.getElementById('results-count-text').textContent = `${rows.length} dari ${REGIONS.length} wilayah — ${dz.emoji} ${dz.label} (Target Nasional: ${targetTxt})`;
+  const merah = rows.filter(r=>r.status==='merah').length;
+  const kuning = rows.filter(r=>r.status==='kuning').length;
+  const hijau = rows.filter(r=>r.status==='hijau').length;
+  document.getElementById('results-summary').textContent = `🔴 ${merah}  🟡 ${kuning}  🟢 ${hijau}`;
+  updateCritBadge();
+}
+
+function updateCritBadge(){
+  const d = computeDiseaseStats(currentDisease);
+  const merahCount = d.filter(x=>x.status==='merah').length;
+  document.getElementById('crit-count').textContent = merahCount;
+}
+
+// ── Rollup: rata-rata % capaian-terhadap-target untuk satu indikator (IKK), secara nasional ──
+function ikkAchievementPct(dz){
+  const arr = computeDiseaseStats(dz.key);
+  const avgCapaian = arr.reduce((s,x)=>s+x.capaian,0)/arr.length;
+  return Math.max(0, Math.min(100, Math.round((avgCapaian/dz.target)*100)));
+}
+// ── Rollup IKP: rata-rata pencapaian seluruh IKK di bawahnya ──
+function ikpAchievementPct(ikpCode){
+  const kids = ikkByIkp(ikpCode);
+  if(!kids.length) return 0;
+  const vals = kids.map(ikkAchievementPct);
+  return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+}
+// ── Rollup ISS: rata-rata pencapaian seluruh IKP di bawahnya ──
+function issAchievementPct(issCode){
+  const kids = ikpByIss(issCode);
+  if(!kids.length) return 0;
+  const vals = kids.map(k=>ikpAchievementPct(k.code));
+  return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+}
+function achievementStatus(p){ return p>=80?'hijau':p>=45?'kuning':'merah'; }
+
+// ── Render 3 kartu ISS (rollup) di Beranda ──
+function renderIssRow(){
+  const wrap = document.getElementById('iss-row');
+  if(!wrap) return;
+  wrap.innerHTML = ISS_LIST.map(iss=>{
+    const p = issAchievementPct(iss.code);
+    const status = achievementStatus(p);
+    const col = status==='merah'?'#C0392B':status==='kuning'?'#E8A020':'#0F8C6B';
+    return `<div class="iss-card" onclick="navigate('cascading')">
+      <div class="iss-card-top">
+        <div><div class="iss-code-badge">${iss.code} · Prioritas ${iss.rank}</div></div>
+        <div class="iss-rank-dot">${iss.rank}</div>
+      </div>
+      <div class="iss-card-name">${iss.name}</div>
+      <div class="iss-ring-wrap">
+        <div class="iss-ring-num" style="color:${col}">${p}%</div>
+        <div><div class="iss-ring-lbl">rata-rata capaian IKP<br>terhadap target</div></div>
+      </div>
+      <div class="iss-card-foot"><span>Target ISS</span><span>${iss.target}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ── Render Beranda: ringkasan 26 IKK + KPI + rollup ISS ──
+function renderBeranda(){
+  const periodLabel = document.getElementById('period-select').selectedOptions[0].textContent;
+  const chartLabelEl = document.getElementById('period-label-chart');
+  if(chartLabelEl) chartLabelEl.textContent = periodLabel;
+
+  renderIssRow();
+
+  const summaryRows = DISEASES.map(dz=>{
+    const arr = computeDiseaseStats(dz.key);
+    const avgCapaian = arr.reduce((s,x)=>s+x.capaian,0)/arr.length;
+    const avgGap = arr.reduce((s,x)=>s+x.gap,0)/arr.length;
+    const status = avgGap>50?'merah':avgGap>=20?'kuning':'hijau';
+    return { dz, avgCapaian, avgGap, status };
+  });
+
+  const tbody = document.getElementById('disease-summary-tbody');
+  tbody.innerHTML = summaryRows.map(({dz,avgCapaian,avgGap,status})=>{
+    const ikp = parentIKP(dz), iss = parentISS(dz);
+    const targetTxt = dz.targetLabel ? dz.targetLabel : dz.target.toFixed(1)+'%';
+    return `
+    <tr onclick="selectDisease('${dz.key}')">
+      <td class="dz-name"><span class="dz-emoji">${dz.emoji}</span>${dz.label}</td>
+      <td style="font-size:10.5px;color:var(--gray-text)">${ikp?ikp.code:''} · ${iss?iss.code:''}</td>
+      <td class="num">${targetTxt}</td>
+      <td class="num">${avgCapaian.toFixed(1)}</td>
+      <td><div class="mini-bar-track"><div class="mini-bar-fill" style="width:${Math.min(100,(avgCapaian/dz.target)*100)}%;background:${status==='merah'?'#C0392B':status==='kuning'?'#E8A020':'#0F8C6B'}"></div></div></td>
+      <td><span class="gap-cell ${gapClass(status)}">${status==='merah'?'Sangat Tertinggal':status==='kuning'?'Perlu Perhatian':'Mendekati Target'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── BAR CHART CAPAIAN PER PROVINSI (38 provinsi, akumulasi seluruh skrining) ──
+let provinceBarChartInstance=null;
+function renderProvinceBarChart(){
+  const provNames = PROVINSI_DATA.map(p=>p.nama);
+  const combined = provNames.map(n=>({ n, ...computeProvinceAggregate(n,'__avg__') }));
+  combined.sort((a,b)=>b.avgCapaian-a.avgCapaian);
+  const labels = combined.map(c=>c.n);
+  const values = combined.map(c=>Math.round(c.avgCapaian*10)/10);
+  const colors = combined.map(c=>c.status==='merah'?'#C0392B':c.status==='kuning'?'#E8A020':'#0F8C6B');
+
+  const canvas = document.getElementById('province-bar-chart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if(provinceBarChartInstance) provinceBarChartInstance.destroy();
+  provinceBarChartInstance = new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Capaian Skrining Gabungan (%)', data:values, backgroundColor:colors, borderRadius:4, barThickness:14 }] },
+    options:{
+      indexAxis:'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> c.parsed.x.toFixed(1)+'% capaian gabungan' } } },
+      scales:{
+        x:{ beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' }, grid:{ color:'#EAEFF7' } },
+        y:{ ticks:{ font:{ size:10.5 } }, grid:{ display:false } }
+      },
+      onClick:(evt, elements)=>{
+        if(elements.length>0){
+          const idx = elements[0].index;
+          drillToProvince(labels[idx]);
+          navigate('drilldown');
+        }
+      }
+    }
+  });
+}
+
+// ── PETA CASCADING INTERAKTIF: state & render ──
+let cascadeSelectedISS = null;
+let cascadeSelectedIKP = null;
+
+function cascadeSelectISS(code){
+  cascadeSelectedISS = (cascadeSelectedISS===code) ? null : code;
+  cascadeSelectedIKP = null;
+  renderCascading();
+}
+function cascadeSelectIKP(code){
+  cascadeSelectedIKP = (cascadeSelectedIKP===code) ? null : code;
+  renderCascadeIKPTrack();
+  renderCascadeIKKPanel();
+}
+
+function renderCascading(){
+  // chips filter ISS
+  const chipWrap = document.getElementById('cascade-chips');
+  chipWrap.innerHTML = `<button class="cascade-chip ${cascadeSelectedISS===null?'active':''}" onclick="cascadeSelectISS(null)">Semua ISS</button>` +
+    ISS_LIST.map(iss=>`<button class="cascade-chip ${cascadeSelectedISS===iss.code?'active':''}" onclick="cascadeSelectISS('${iss.code}')">${iss.code}</button>`).join('');
+
+  // ISS track
+  const issTrack = document.getElementById('cascade-iss-track');
+  issTrack.innerHTML = ISS_LIST.map(iss=>{
+    const p = issAchievementPct(iss.code);
+    const sel = cascadeSelectedISS===iss.code ? 'selected' : '';
+    return `<div class="cnode-iss ${sel}" onclick="cascadeSelectISS('${iss.code}')">
+      <div class="cnode-code">${iss.code} · Prioritas ${iss.rank}</div>
+      <div class="cnode-name">${iss.name}</div>
+      <div class="cnode-target">Target: ${iss.target} &nbsp;·&nbsp; Capaian IKP: ${p}%</div>
+    </div>`;
+  }).join('');
+
+  renderCascadeIKPTrack();
+  renderCascadeIKKPanel();
+}
+
+function renderCascadeIKPTrack(){
+  const list = cascadeSelectedISS ? ikpByIss(cascadeSelectedISS) : IKP_LIST;
+  const track = document.getElementById('cascade-ikp-track');
+  track.innerHTML = list.map(ikp=>{
+    const p = ikpAchievementPct(ikp.code);
+    const sel = cascadeSelectedIKP===ikp.code ? 'selected' : '';
+    return `<div class="cnode-ikp ${sel}" onclick="cascadeSelectIKP('${ikp.code}')">
+      <div class="cnode-code">${ikp.code}</div>
+      <div class="cnode-name">${ikp.name}</div>
+      <div class="cnode-target">Capaian ${p}% · Target ${ikp.target}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderCascadeIKKPanel(){
+  const title = document.getElementById('ikk-panel-title');
+  const count = document.getElementById('ikk-panel-count');
+  const body = document.getElementById('ikk-panel-body');
+  if(!cascadeSelectedIKP){
+    title.textContent = 'Pilih salah satu IKP di atas untuk melihat rincian IKK';
+    count.textContent = '';
+    body.innerHTML = `<div class="empty-hint-box">Rincian Indikator Kinerja Kegiatan akan tampil di sini, lengkap dengan capaian nasional real-time dari 514 kab/kota.</div>`;
+    return;
+  }
+  const ikp = IKP_MAP[cascadeSelectedIKP];
+  const kids = ikkByIkp(ikp.code);
+  title.textContent = `${ikp.code} — ${ikp.name}`;
+  count.textContent = `${kids.length} IKK`;
+  body.innerHTML = `<div class="ikk-grid">` + kids.map(dz=>{
+    const p = ikkAchievementPct(dz);
+    const status = achievementStatus(p);
+    const targetTxt = dz.targetLabel ? dz.targetLabel : dz.target+'%';
+    return `<div class="ikk-card" onclick="selectDisease('${dz.key}')">
+      <div class="ikk-card-top"><span><span class="code">${dz.key}</span>${dz.emoji} ${dz.label}</span></div>
+      <div class="mini-bar-track"><div class="mini-bar-fill" style="width:${p}%;background:${status==='merah'?'#C0392B':status==='kuning'?'#E8A020':'#0F8C6B'}"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--gray-text);margin-top:6px">
+        <span>Target: ${targetTxt}</span><span>${p}% dari target</span>
+      </div>
+    </div>`;
+  }).join('') + `</div>`;
+}
+
+// ── DRILL-DOWN WILAYAH: 38 Provinsi → Kab/Kota ──
+let drillLevel = 'nasional';   // 'nasional' | 'provinsi'
+let drillProvince = null;
+let drillDiseaseSel = '__avg__';
+
+function renderDrillDiseaseSelect(){
+  const sel = document.getElementById('drill-disease-select');
+  sel.innerHTML = `<option value="__avg__">Rata-rata Semua IKK</option>` + buildGroupedOptions();
+  sel.value = drillDiseaseSel;
+}
+
+function renderDrilldown(){
+  drillDiseaseSel = document.getElementById('drill-disease-select').value;
+
+  if(drillLevel==='nasional'){
+    document.getElementById('breadcrumb').innerHTML = `<span class="breadcrumb-current">🇮🇩 Nasional — 38 Provinsi</span>`;
+    document.getElementById('drill-title').textContent = 'Capaian Skrining per Provinsi';
+    document.getElementById('drill-detail-box').style.display='none';
+    document.getElementById('province-grid').style.display='grid';
+
+    const provNames = PROVINSI_DATA.map(p=>p.nama);
+    document.getElementById('province-grid').innerHTML = provNames.map(n=>{
+      const agg = computeProvinceAggregate(n, drillDiseaseSel);
+      const col = agg.status==='merah'?'#C0392B':agg.status==='kuning'?'#E8A020':'#0F8C6B';
+      const safeName = n.replace(/'/g,"\\'");
+      return `<div class="province-card" onclick="drillToProvince('${safeName}')">
+        <div class="province-card-name">${n}</div>
+        <div class="province-card-value" style="color:${col}">${agg.avgCapaian.toFixed(1)}%</div>
+        <div class="province-card-sub">${agg.jumlahWilayah} kab/kota · Gap rata-rata ${agg.avgGap.toFixed(1)}%</div>
+        <div class="province-card-bar"><div class="province-card-fill" style="width:${Math.min(100,(agg.avgCapaian/agg.avgTarget)*100)}%;background:${col}"></div></div>
+      </div>`;
+    }).join('');
+  } else {
+    document.getElementById('province-grid').style.display='none';
+    document.getElementById('breadcrumb').innerHTML = `<span class="breadcrumb-item" onclick="goNasionalDrill()">🇮🇩 Nasional</span><span class="breadcrumb-sep"> / </span><span class="breadcrumb-current">${drillProvince}</span>`;
+    document.getElementById('drill-title').textContent = `Capaian Kabupaten/Kota — ${drillProvince}`;
+
+    const rows = [];
+    REGIONS.forEach((r,idx)=>{
+      if(r.provinsi!==drillProvince) return;
+      if(drillDiseaseSel==='__avg__'){
+        // Sama seperti computeProvinceAggregate: target berbeda tiap IKK tidak dijumlah/dirata-rata.
+        // Dipakai rasio %-dari-target per indikator, dirata-rata; acuan target ditampilkan tetap 100.
+        let ratioSum=0, gapSum=0;
+        DISEASES.forEach(dz=>{
+          const d = getCellData(dz.key, idx);
+          ratioSum += Math.min(100, (d.capaian/dz.target)*100);
+          gapSum += d.gap;
+        });
+        const capaian = ratioSum/DISEASES.length, gap = gapSum/DISEASES.length, target = 100;
+        const status = gap>50?'merah':gap>=20?'kuning':'hijau';
+        rows.push({ ...r, capaian, gap, target, status });
+      } else {
+        const d = getCellData(drillDiseaseSel, idx);
+        rows.push({ ...r, capaian:d.capaian, gap:d.gap, target:DISEASE_MAP[drillDiseaseSel].target, status:d.status });
+      }
+    });
+
+    const box = document.getElementById('drill-detail-box');
+    box.style.display='block';
+    box.innerHTML = `
+      <div class="results-count" style="padding:0 0 10px;border:none">${rows.length} kabupaten/kota di ${drillProvince}</div>
+      <div class="table-scroll" style="max-height:480px">
+        <table class="repo-table">
+          <thead><tr><th>#</th><th>Kode Wilayah</th><th>Kabupaten/Kota</th><th>Target (%)</th><th>Capaian (%)</th><th>Gap (%)</th></tr></thead>
+          <tbody>
+            ${rows.map((r,i)=>`<tr>
+              <td class="rownum">${i+1}</td>
+              <td class="kode-wilayah">${r.kodeWilayah}</td>
+              <td class="kab-cell">${r.kabkota}</td>
+              <td class="num">${r.target.toFixed(1)}</td>
+              <td class="num">${r.capaian.toFixed(1)}</td>
+              <td class="center"><span class="gap-cell ${gapClass(r.status)}">${r.gap.toFixed(1)}%</span></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+}
+
+function drillToProvince(name){
+  drillLevel='provinsi'; drillProvince=name;
+  navigate('drilldown');
+  renderDrilldown();
+}
+function goNasionalDrill(){
+  drillLevel='nasional'; drillProvince=null;
+  renderDrilldown();
+}
+
+// ── CSV EXPORT ──
+function exportCSV(){
+  const dz = DISEASE_MAP[currentDisease];
+  const ikp = parentIKP(dz), iss = parentISS(dz);
+  const rows = getFilteredRows();
+  const hdr = ['Kode Wilayah','Nama Provinsi','Kabupaten/Kota','ISS','IKP','Indikator (IKK)','Target (Sasaran)','Capaian','%','Status'];
+  const statusLabel = { merah:'Sangat Tertinggal', kuning:'Perlu Perhatian', hijau:'Mendekati Target' };
+  const csvRows = rows.map(r=>[r.kodeWilayah, '"'+r.provinsi+'"', '"'+r.kabkota+'"', iss?iss.code:'', ikp?ikp.code:'', '"'+dz.label+'"', r.sasaran??'', r.tercapai??'', r.capaian, statusLabel[r.status]]);
+  const csv = [hdr, ...csvRows].map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `ikk-${dz.key}-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+// ── PERIOD CHANGE: perbarui seluruh tampilan sesuai triwulan yang dipilih ──
+function onPeriodChange(){
+  currentPeriod = document.getElementById('period-select').value;
+  renderBeranda();
+  renderRepositori();
+  renderProvinceBarChart();
+  if(document.getElementById('drilldown').classList.contains('active')) renderDrilldown();
+  if(document.getElementById('cascading').classList.contains('active')) renderCascading();
+}
+
+// ══════════════════════════════════════════════════════════════
+// IMPOR DATA MASSAL — pilih 1 IKK → tarik CSV Google Sheets →
+// cocokkan ke 514 kab/kota → pratinjau → terapkan
+// ══════════════════════════════════════════════════════════════
+
+// Parser CSV sederhana namun tahan terhadap tanda kutip & koma di dalam field
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else { field += c; }
+    } else {
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ row.push(field); field=''; }
+      else if(c === '\r'){ /* skip */ }
+      else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=''; }
+      else { field += c; }
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.length>1 || (r.length===1 && r[0].trim()!==''));
+}
+
+function renderImportPage(){
+  const sel = document.getElementById('import-ikk-select');
+  if(!sel) return;
+  sel.innerHTML = buildGroupedOptions();
+  sel.value = currentDisease;
+  onImportIkkChange();
+}
+
+function onImportIkkChange(){
+  const key = document.getElementById('import-ikk-select').value;
+  const logBox = document.getElementById('import-last-log');
+  const log = IMPORT_LOG[key];
+  if(log){
+    logBox.style.display = 'block';
+    logBox.innerHTML = `📋 Riwayat impor terakhir untuk indikator ini: <strong>${log.matched}/${log.total} baris cocok</strong>${log.periode?(' · periode '+log.periode):''}, diterapkan pada ${new Date(log.ts).toLocaleString('id-ID')}.`;
+  } else {
+    logBox.style.display = 'block';
+    logBox.innerHTML = `📋 Indikator ini belum pernah diimpor lewat Google Sheets.`;
+  }
+  cancelImportPreview();
+}
+
+// Unduh template CSV berisi 514 kab/kota (kode wilayah sudah terisi, numerator/denominator kosong)
+// supaya staf tinggal isi angkanya di Spreadsheet.
+function downloadImportTemplate(){
+  const key = document.getElementById('import-ikk-select').value;
+  const hdr = ['kode_wilayah','provinsi','kabupaten_kota','denominator','numerator'];
+  const rows = REGIONS.map(r=>[r.kodeWilayah, '"'+r.provinsi+'"', '"'+r.kabkota+'"', '', '']);
+  const csv = [hdr, ...rows].map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download = `template-impor-${key}.csv`;
+  a.click();
+}
+
+async function fetchAndPreviewImport(){
+  const url = document.getElementById('import-sheet-url').value.trim();
+  const statusEl = document.getElementById('import-status-msg');
+  cancelImportPreview();
+  if(!url){ statusEl.innerHTML = '<span style="color:var(--red)">Isi/tempel URL CSV terlebih dahulu.</span>'; return; }
+  statusEl.innerHTML = '<span style="color:var(--navy)">⟳ Menarik data dari Google Sheets...</span>';
+  try{
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const text = await r.text();
+    const table = parseCSV(text);
+    if(table.length < 2) throw new Error('Sheet kosong atau format tidak sesuai template.');
+
+    const header = table[0].map(h=>h.trim().toLowerCase());
+    const idxKode = header.indexOf('kode_wilayah');
+    const idxDen = header.indexOf('denominator');
+    const idxNum = header.indexOf('numerator');
+    if(idxKode===-1 || idxDen===-1 || idxNum===-1){
+      throw new Error('Kolom wajib tidak ditemukan. Header harus memuat: kode_wilayah, denominator, numerator (unduh template agar sesuai).');
+    }
+    const idxKab = header.indexOf('kabupaten_kota');
+    const kodeMap = regionIndexByKode();
+
+    const matched = [], unmatchedCodes = [];
+    for(let i=1;i<table.length;i++){
+      const cols = table[i];
+      const kode = (cols[idxKode]||'').trim();
+      if(!kode) continue;
+      const den = parseFloat(cols[idxDen]);
+      const num = parseFloat(cols[idxNum]);
+      const regIdx = kodeMap[kode];
+      if(regIdx===undefined){ unmatchedCodes.push(kode); continue; }
+      if(isNaN(den) || isNaN(num) || den<=0){ continue; }
+      const capaian = Math.max(0, Math.min(100, Math.round((num/den*100)*10)/10));
+      matched.push({ kodeWilayah:kode, kabSheet:(cols[idxKab]||'').trim(), region:REGIONS[regIdx], denominator:den, numerator:num, capaian });
+    }
+
+    pendingImportRows = matched;
+    renderImportPreview(table.length-1, unmatchedCodes);
+    statusEl.innerHTML = `<span style="color:var(--teal);font-weight:600">✓ Berhasil dibaca. Lihat pratinjau di bawah sebelum diterapkan.</span>`;
+  }catch(e){
+    statusEl.innerHTML = `<span style="color:var(--red);font-weight:600">✗ Gagal: ${e.message}</span>`;
+  }
+}
+
+function renderImportPreview(totalRows, unmatchedCodes){
+  const box = document.getElementById('import-preview-box');
+  const summary = document.getElementById('import-preview-summary');
+  const tbody = document.getElementById('import-preview-tbody');
+  box.style.display = 'block';
+
+  const matched = pendingImportRows;
+  summary.innerHTML = `
+    <span class="import-match-tag" style="background:var(--teal-bg);color:var(--teal)">✓ ${matched.length} baris siap diterapkan</span>
+    &nbsp;&nbsp;<span class="import-match-tag" style="background:var(--gray-bg);color:var(--text-mid)">Total baris di Sheet: ${totalRows}</span>
+    ${unmatchedCodes.length ? `&nbsp;&nbsp;<span class="import-match-tag" style="background:var(--red-bg);color:var(--red)">⚠ ${unmatchedCodes.length} kode wilayah tidak dikenali</span>` : ''}
+    ${unmatchedCodes.length ? `<div style="font-size:10.5px;color:var(--gray-text);margin-top:6px">Kode tidak dikenali (cek kembali penulisannya): ${unmatchedCodes.slice(0,15).join(', ')}${unmatchedCodes.length>15?', …':''}</div>` : ''}
+  `;
+
+  tbody.innerHTML = matched.slice(0,50).map((m,i)=>`
+    <tr>
+      <td class="rownum">${i+1}</td>
+      <td class="kode-wilayah">${m.kodeWilayah}</td>
+      <td class="kab-cell">${m.kabSheet||'–'}</td>
+      <td class="kab-cell">${m.region.kabkota}</td>
+      <td class="num">${m.denominator.toLocaleString('id-ID')}</td>
+      <td class="num">${m.numerator.toLocaleString('id-ID')}</td>
+      <td class="num" style="font-weight:700">${m.capaian.toFixed(1)}</td>
+    </tr>`).join('') + (matched.length>50 ? `<tr><td colspan="7" style="text-align:center;color:var(--gray-text);font-size:11px">… dan ${matched.length-50} baris lainnya</td></tr>` : '');
+
+  document.getElementById('import-apply-btn').disabled = matched.length===0;
+}
+
+function cancelImportPreview(){
+  pendingImportRows = null;
+  document.getElementById('import-preview-box').style.display = 'none';
+  document.getElementById('import-preview-tbody').innerHTML = '';
+}
+
+async function applyImportedData(){
+  if(!pendingImportRows || !pendingImportRows.length) return;
+  const key = document.getElementById('import-ikk-select').value;
+  const periode = document.getElementById('import-periode').value;
+  const url = document.getElementById('import-sheet-url').value.trim();
+  const dz = DISEASE_MAP[key];
+  const count = pendingImportRows.length;
+
+  const applyBtn = document.getElementById('import-apply-btn');
+  applyBtn.disabled = true;
+  applyBtn.textContent = 'Menyimpan ke server…';
+
+  // Terapkan ke tampilan lokal dulu (langsung terasa responsif)
+  const rowsForFirebase = {};
+  pendingImportRows.forEach(m=>{
+    const ovKey = overrideKey(key, m.kodeWilayah, periode);
+    IMPORTED_DATA[ovKey] = { capaian:m.capaian, numerator:m.numerator, denominator:m.denominator };
+    rowsForFirebase[fbKeySafe(m.kodeWilayah)] = { kodeWilayah:m.kodeWilayah, capaian:m.capaian, numerator:m.numerator, denominator:m.denominator };
+  });
+  const logEntry = { ts:Date.now(), matched:count, total:count, url, periode };
+  IMPORT_LOG[key] = logEntry;
+
+  cancelImportPreview();
+  document.getElementById('import-sheet-url').value = '';
+  document.getElementById('import-status-msg').innerHTML = '';
+  onImportIkkChange();
+
+  // Sinkronkan tampilan lain agar langsung memperlihatkan data yang baru diterapkan
+  document.getElementById('period-select').value = periode;
+  currentPeriod = periode;
+  currentDisease = key;
+  document.getElementById('disease-select').value = key;
+  updateDiseaseNavActive();
+  renderBeranda();
+  renderRepositori();
+  renderProvinceBarChart();
+
+  // Simpan ke Firebase supaya permanen & terlihat sama oleh semua pengunjung
+  try{
+    await fbSaveIndicatorPeriod(key, periode, rowsForFirebase);
+    await fbSaveLog(key, logEntry);
+    showDataBanner('success', `Impor berhasil disimpan ke server: ${count} kabupaten/kota untuk indikator "${dz.emoji} ${dz.label}" pada periode ${periode}. Data ini sekarang permanen dan akan terlihat sama oleh semua pengunjung. Cek Tabel Indikator (ditandai 📥) untuk verifikasi.`);
+  }catch(e){
+    showDataBanner('error', `Data diterapkan di tampilan Anda, tetapi GAGAL disimpan ke server (${e.message}). Pengunjung lain belum akan melihat perubahan ini — cek koneksi/aturan akses Firebase, lalu impor ulang.`);
+  }
+  applyBtn.disabled = false;
+  applyBtn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Terapkan ke Indikator Ini';
+}
+
+// ── GOOGLE SHEETS CONFIG ──
+function showConfigPanel(){ document.getElementById('config-modal').style.display='flex'; document.getElementById('cfg-url').value=CONFIG.SHEET_URL||''; }
+function hideConfigPanel(){ document.getElementById('config-modal').style.display='none'; }
+async function testConnection(){
+  const url=document.getElementById('cfg-url').value.trim();
+  const statusEl=document.getElementById('cfg-status');
+  if(!url){ statusEl.innerHTML='<span style="color:var(--red)">Isi URL terlebih dahulu</span>'; return; }
+  statusEl.innerHTML='<span style="color:var(--navy)">⟳ Menguji koneksi...</span>';
+  try{
+    const r=await fetch(url); if(!r.ok) throw new Error('HTTP '+r.status);
+    statusEl.innerHTML=`<span style="color:var(--teal);font-weight:600">✓ Koneksi berhasil!</span>`;
+  }catch(e){ statusEl.innerHTML=`<span style="color:var(--red);font-weight:600">✗ Gagal: ${e.message}</span>`; }
+}
+async function saveConfig(){
+  CONFIG.SHEET_URL=document.getElementById('cfg-url').value.trim();
+  hideConfigPanel();
+  showDataBanner('success','Konfigurasi tersimpan. Integrasi data riil dapat dilanjutkan oleh tim teknis.');
+}
+function showDataBanner(type,msg){
+  const b=document.getElementById('data-banner'); if(!b) return;
+  const cfg={ success:{bg:'#E6F5F0',color:'#065F46',icon:'✓'}, error:{bg:'var(--red-bg)',color:'#7F1D1D',icon:'⚠'}, info:{bg:'var(--gray-bg)',color:'var(--text-mid)',icon:'ℹ'} };
+  const s=cfg[type]||cfg.success;
+  b.style.cssText=`display:flex;align-items:center;gap:10px;padding:8px 14px;background:${s.bg};border-radius:8px;margin:16px 24px;font-size:12px;color:${s.color}`;
+  b.innerHTML=`<span style="font-size:15px">${s.icon}</span><span style="flex:1">${msg}</span><button onclick="this.parentElement.style.display='none'" style="background:none;border:none;cursor:pointer;color:inherit;font-size:14px">✕</button>`;
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', async ()=>{
+  renderDiseaseNav();
+  renderDiseaseSelects();
+  updateDiseaseNavActive();
+
+  document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeStatusFilter = btn.dataset.status;
+    renderRepositori();
+  }));
+  document.getElementById('search-input').addEventListener('input', e=>{
+    searchQuery = e.target.value; renderRepositori();
+  });
+
+  renderDrillDiseaseSelect();
+  renderImportPage();
+
+  // Muat data hasil impor dari Firebase (kalau ada) sebelum menampilkan halaman,
+  // supaya semua pengunjung melihat data terbaru yang sama.
+  showDataBanner('info', '⟳ Memuat data terbaru dari server…');
+  await fbLoadAll();
+  document.getElementById('data-banner').style.display = 'none';
+
+  renderImportPage();
+  renderBeranda();
+  renderRepositori();
+  setTimeout(()=>{ renderProvinceBarChart(); },150);
+});
+</script>
+
+</body>
+</html>
