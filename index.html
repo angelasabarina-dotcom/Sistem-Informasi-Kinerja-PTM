@@ -186,6 +186,7 @@ a{text-decoration:none}
 
 /* ══ BAR CHART 38 PROVINSI (BERANDA) ══ */
 .prov-barchart-wrap{height:880px;position:relative}
+.drill-chart-wrap{position:relative}
 
 @media(max-width:1300px){
   .province-grid{grid-template-columns:repeat(3,1fr)}
@@ -1733,6 +1734,7 @@ function renderCascadeIKKPanel(){
 let drillLevel = 'nasional';   // 'nasional' | 'provinsi'
 let drillProvince = null;
 let drillDiseaseSel = '__avg__';
+let drillProvinceChartInstance = null;
 
 function renderDrillDiseaseSelect(){
   const sel = document.getElementById('drill-disease-select');
@@ -1787,25 +1789,66 @@ function renderDrilldown(){
       }
     });
 
+    // ── 4 kartu ringkasan: rata-rata capaian + jumlah status merah/kuning/hijau ──
+    const avgCapaian = rows.length ? rows.reduce((s,r)=>s+r.capaian,0)/rows.length : 0;
+    const jmlMerah = rows.filter(r=>r.status==='merah').length;
+    const jmlKuning = rows.filter(r=>r.status==='kuning').length;
+    const jmlHijau = rows.filter(r=>r.status==='hijau').length;
+
+    // ── Urutkan dari capaian terendah ke tertinggi untuk chart horizontal ──
+    const sorted = [...rows].sort((a,b)=>a.capaian-b.capaian);
+    const chartHeight = Math.max(280, sorted.length*28);
+
     const box = document.getElementById('drill-detail-box');
     box.style.display='block';
     box.innerHTML = `
-      <div class="results-count" style="padding:0 0 10px;border:none">${rows.length} kabupaten/kota di ${drillProvince}</div>
-      <div class="table-scroll" style="max-height:480px">
-        <table class="repo-table">
-          <thead><tr><th>#</th><th>Kode Wilayah</th><th>Kabupaten/Kota</th><th>Target (%)</th><th>Capaian (%)</th><th>Gap (%)</th></tr></thead>
-          <tbody>
-            ${rows.map((r,i)=>`<tr>
-              <td class="rownum">${i+1}</td>
-              <td class="kode-wilayah">${r.kodeWilayah}</td>
-              <td class="kab-cell">${r.kabkota}</td>
-              <td class="num">${r.target.toFixed(1)}</td>
-              <td class="num">${r.capaian.toFixed(1)}</td>
-              <td class="center"><span class="gap-cell ${gapClass(r.status)}">${r.gap.toFixed(1)}%</span></td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
+      <div class="kpi-row" style="margin-bottom:16px">
+        <div class="kpi-card">
+          <div class="kpi-label">Rata-rata Capaian</div>
+          <div class="kpi-value">${avgCapaian.toFixed(1)}%</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">🔴 Merah (Gap &gt; 50%)</div>
+          <div class="kpi-value red">${jmlMerah}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">🟡 Kuning (Gap 20–50%)</div>
+          <div class="kpi-value orange">${jmlKuning}</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">🟢 Hijau (Gap &lt; 20%)</div>
+          <div class="kpi-value teal">${jmlHijau}</div>
+        </div>
+      </div>
+      <div class="results-count" style="padding:0 0 10px;border:none">${rows.length} kabupaten/kota di ${drillProvince} — diurutkan dari capaian terendah</div>
+      <div class="drill-chart-wrap" style="height:${chartHeight}px">
+        <canvas id="drill-province-chart"></canvas>
+      </div>
+      <div style="margin-top:16px">
+        <button class="action-btn" onclick="goNasionalDrill()">← Kembali ke 38 Provinsi</button>
       </div>`;
+
+    const canvas = document.getElementById('drill-province-chart');
+    if(canvas){
+      const labels = sorted.map(r=>r.kabkota);
+      const values = sorted.map(r=>Math.round(r.capaian*10)/10);
+      const colors = sorted.map(r=>r.status==='merah'?'#C0392B':r.status==='kuning'?'#E8A020':'#0F8C6B');
+      const ctx = canvas.getContext('2d');
+      if(drillProvinceChartInstance) drillProvinceChartInstance.destroy();
+      drillProvinceChartInstance = new Chart(ctx, {
+        type:'bar',
+        data:{ labels, datasets:[{ label:'Capaian (%)', data:values, backgroundColor:colors, borderRadius:4, barThickness:16 }] },
+        options:{
+          indexAxis:'y',
+          responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:(c)=> c.parsed.x.toFixed(1)+'% capaian' } } },
+          scales:{
+            x:{ beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' }, grid:{ color:'#EAEFF7' } },
+            y:{ ticks:{ font:{ size:10.5 } }, grid:{ display:false } }
+          }
+        }
+      });
+    }
   }
 }
 
