@@ -7,6 +7,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "ISI_API_KEY_DARI_FIREBASE_CONSOLE",
+  authDomain: "sistem-informasi-kinerja-ptm.firebaseapp.com",
+  databaseURL: "https://sistem-informasi-kinerja-ptm-default-rtdb.firebaseio.com",
+  projectId: "sistem-informasi-kinerja-ptm",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// Expose ke window agar bisa diakses fungsi JS lain
+window._fbAuth = auth;
+window._fbSignIn = (email, password) => signInWithEmailAndPassword(auth, email, password);
+window._fbSignOut = () => signOut(auth);
+window._fbOnAuthChanged = (cb) => onAuthStateChanged(auth, cb);
+</script>
 <style>
 /* ══ RESET & TOKENS ══ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -243,6 +264,26 @@ a{text-decoration:none}
 .ikk-card-top{font-size:11.5px;font-weight:600;margin-bottom:7px;display:flex;justify-content:space-between;gap:8px}
 .ikk-card-top .code{color:var(--gray-text);font-weight:700;font-size:10px;display:block}
 .empty-hint-box{text-align:center;color:var(--gray-text);font-size:12px;padding:22px;border:1px dashed var(--gray-border);border-radius:10px}
+/* ══ AUTH ══ */
+.auth-modal-overlay{position:fixed;inset:0;background:rgba(13,43,94,.5);z-index:400;display:flex;align-items:center;justify-content:center}
+.auth-modal{background:white;border-radius:14px;padding:28px 28px 24px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(13,43,94,.18)}
+.auth-modal-title{font-size:16px;font-weight:700;color:var(--text-dark);margin-bottom:4px}
+.auth-modal-sub{font-size:12px;color:var(--gray-text);margin-bottom:20px;line-height:1.5}
+.auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.auth-field label{font-size:11.5px;font-weight:600;color:var(--text-mid)}
+.auth-field input{border:1px solid var(--gray-border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text-dark);font-family:'Inter',sans-serif}
+.auth-field input:focus{outline:none;border-color:var(--teal)}
+.auth-error{font-size:12px;color:var(--red);min-height:18px;margin-bottom:8px}
+.auth-btn-primary{width:100%;padding:10px;background:var(--teal);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.auth-btn-primary:hover{background:var(--teal-light)}
+.auth-btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.topbar-user{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-mid)}
+.topbar-user strong{color:var(--text-dark)}
+.btn-logout{padding:5px 12px;border:1px solid var(--gray-border);border-radius:7px;background:white;font-size:12px;color:var(--text-mid);cursor:pointer;font-family:'Inter',sans-serif}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+.btn-login{padding:5px 14px;border:none;border-radius:7px;background:var(--teal);color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.btn-login:hover{background:var(--teal-light)}
+.nav-item-locked{opacity:.4;pointer-events:none;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -320,6 +361,9 @@ a{text-decoration:none}
       <div class="crit-badge" id="crit-badge">
         ⚠ <span id="crit-count">0</span> Kab/Kota Sangat Tertinggal
       </div>
+      <div id="topbar-auth">
+  <button class="btn-login" onclick="showLoginModal()">🔐 Login Staf</button>
+</div>
       <div class="topbar-badge">PMK No. 12 / 2025</div>
     </div>
   </div>
@@ -567,6 +611,27 @@ a{text-decoration:none}
 
 </main>
 
+<!-- LOGIN MODAL -->
+<div class="auth-modal-overlay" id="login-modal" style="display:none">
+  <div class="auth-modal">
+    <div class="auth-modal-title">🔐 Login Staf SIPTM</div>
+    <div class="auth-modal-sub">Masukkan email dan password yang diberikan oleh administrator untuk mengakses fitur input data.</div>
+    <div class="auth-field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="staf@kemkes.go.id" autocomplete="email">
+    </div>
+    <div class="auth-field">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <div class="auth-error" id="login-error"></div>
+    <button class="auth-btn-primary" id="login-btn" onclick="doLogin()">Masuk</button>
+    <div style="text-align:center;margin-top:14px">
+      <button onclick="hideLoginModal()" style="background:none;border:none;font-size:12px;color:var(--gray-text);cursor:pointer">Batal</button>
+    </div>
+  </div>
+</div>
 <!-- CONFIG MODAL -->
 <div class="modal-overlay" id="config-modal" style="display:none;position:fixed;inset:0;background:rgba(13,43,94,.35);z-index:300;align-items:center;justify-content:center">
   <div class="modal" style="background:white;border-radius:12px;padding:22px 24px;max-width:440px;width:90%">
@@ -2199,6 +2264,104 @@ document.addEventListener('DOMContentLoaded', async ()=>{
     loadDataFromGoogleSheet();
   }
 });
+// ══ FIREBASE AUTH — Login & Akses Kontrol ══
+let currentUser = null;
+
+function showLoginModal(){
+  document.getElementById('login-modal').style.display='flex';
+  document.getElementById('login-email').focus();
+  document.getElementById('login-error').textContent='';
+  document.getElementById('login-password').value='';
+}
+function hideLoginModal(){
+  document.getElementById('login-modal').style.display='none';
+}
+
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  if(!email || !password){ errEl.textContent='Email dan password wajib diisi.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+  errEl.textContent = '';
+  try {
+    await window._fbSignIn(email, password);
+    hideLoginModal();
+  } catch(e) {
+    const msg = {
+      'auth/invalid-credential': 'Email atau password salah.',
+      'auth/user-not-found': 'Akun tidak ditemukan.',
+      'auth/wrong-password': 'Password salah.',
+      'auth/too-many-requests': 'Terlalu banyak percobaan. Coba beberapa menit lagi.',
+      'auth/invalid-email': 'Format email tidak valid.',
+    };
+    errEl.textContent = msg[e.code] || 'Login gagal: ' + e.message;
+  }
+  btn.disabled = false;
+  btn.textContent = 'Masuk';
+}
+
+async function doLogout(){
+  await window._fbSignOut();
+}
+
+function applyAuthUI(user){
+  currentUser = user;
+  const authDiv = document.getElementById('topbar-auth');
+  const importNavBtn = document.querySelector('.nav-item[data-page="import"]');
+
+  if(user){
+    // User sudah login
+    const emailShort = user.email.split('@')[0];
+    authDiv.innerHTML = `
+      <div class="topbar-user">
+        <span>👤 <strong>${emailShort}</strong></span>
+        <button class="btn-logout" onclick="doLogout()">Keluar</button>
+      </div>`;
+    // Aktifkan menu Impor Data
+    if(importNavBtn){
+      importNavBtn.classList.remove('nav-item-locked');
+      importNavBtn.title = '';
+    }
+    showDataBanner('success', `✓ Login berhasil sebagai ${user.email}. Anda sekarang bisa mengakses fitur Impor Data Massal.`);
+  } else {
+    // Belum login
+    authDiv.innerHTML = `<button class="btn-login" onclick="showLoginModal()">🔐 Login Staf</button>`;
+    // Kunci menu Impor Data
+    if(importNavBtn){
+      importNavBtn.classList.add('nav-item-locked');
+      importNavBtn.title = 'Login sebagai staf untuk mengakses fitur ini';
+    }
+    // Kalau sedang di halaman import, redirect ke beranda
+    if(document.getElementById('import').classList.contains('active')){
+      navigate('beranda');
+    }
+  }
+}
+
+// Jalankan listener auth saat SDK siap
+function initAuth(){
+  if(window._fbOnAuthChanged){
+    window._fbOnAuthChanged(applyAuthUI);
+  } else {
+    // Tunggu SDK modul selesai load
+    setTimeout(initAuth, 200);
+  }
+}
+initAuth();
+
+// Cegah user yang belum login mengklik menu Import langsung
+const _origNavigate = navigate;
+window.navigate = function(page){
+  if(page === 'import' && !currentUser){
+    showLoginModal();
+    showDataBanner('info', 'Silakan login terlebih dahulu untuk mengakses fitur Impor Data Massal.');
+    return;
+  }
+  _origNavigate(page);
+};
 </script>
 
 </body>
